@@ -259,6 +259,8 @@ contract LiquidatorsRegistryExtension is LiquidatorsRegistryStorage, DiamondExte
       strategyData = uniswapV3LiquidatorFunderData(inputToken, outputToken);
     } else if (isStrategy(strategy, "AlgebraSwapLiquidator")) {
       strategyData = algebraSwapLiquidatorData(inputToken, outputToken);
+    } else if (isStrategy(strategy, "KimUniV4Liquidator")) {
+      strategyData = kimV4LiquidatorData(inputToken, outputToken);
     } else if (isStrategy(strategy, "GammaAlgebraLpTokenLiquidator")) {
       strategyData = gammaAlgebraLpTokenLiquidatorData(inputToken, outputToken);
     } else if (isStrategy(strategy, "GammaUniswapV3LpTokenLiquidator")) {
@@ -463,6 +465,15 @@ contract LiquidatorsRegistryExtension is LiquidatorsRegistryStorage, DiamondExte
     returns (bytes memory strategyData)
   {
     strategyData = abi.encode(outputToken, ap.getAddress("ALGEBRA_SWAP_ROUTER"));
+  }
+
+  function kimV4LiquidatorData(IERC20Upgradeable inputToken, IERC20Upgradeable outputToken)
+    internal
+    view
+    returns (bytes memory strategyData)
+  {
+    address kimV4SwapRouter = 0xAc48FcF1049668B285f3dC72483DF5Ae2162f7e8;
+    strategyData = abi.encode(outputToken, kimV4SwapRouter);
   }
 
   function gammaAlgebraLpTokenLiquidatorData(IERC20Upgradeable inputToken, IERC20Upgradeable outputToken)
