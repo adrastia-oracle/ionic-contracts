@@ -190,7 +190,7 @@ contract DevTesting is BaseTest {
 
   function testAssetAsCollateralCap() public debuggingOnly fork(MODE_MAINNET) {
     address MODE_EZETH = 0x2416092f143378750bb29b79eD961ab195CcEea5;
-    address ezEthWhale = 0xd3B02d999C681BD8B75F340FA7e078cE9097bF23;
+    address ezEthWhale = 0x2344F131B07E6AFd943b0901C55898573F0d1561;
 
     vm.startPrank(multisig);
     uint256 errCode = pool._deployMarket(
