@@ -463,11 +463,11 @@ contract LiquidatorsRegistryExtension is LiquidatorsRegistryStorage, DiamondExte
     strategyData = abi.encode(getUniswapV2Router(inputToken), swapPath);
   }
 
-  function algebraSwapLiquidatorData(IERC20Upgradeable inputToken, IERC20Upgradeable outputToken, address swapRouter)
-    internal
-    view
-    returns (bytes memory strategyData)
-  {
+  function algebraSwapLiquidatorData(
+    IERC20Upgradeable inputToken,
+    IERC20Upgradeable outputToken,
+    address swapRouter
+  ) internal view returns (bytes memory strategyData) {
     strategyData = abi.encode(outputToken, swapRouter);
   }
 
