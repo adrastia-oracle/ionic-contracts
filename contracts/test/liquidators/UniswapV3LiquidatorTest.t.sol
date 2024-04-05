@@ -106,19 +106,11 @@ contract UniswapV3LiquidatorTest is IonicLiquidatorTest {
     emit log_named_uint("feeConfig", feeConfig);
 
     if (feeConfig == 0) {
-      pool = factory.getPool(
-        wethAddr,
-        usdcAddr,
-        uint24(feeConfig)
-      );
+      pool = factory.getPool(wethAddr, usdcAddr, uint24(feeConfig));
       emit log_named_address("Pool at fee 0", pool);
     }
 
-    pool = factory.getPool(
-      wethAddr,
-      usdcAddr,
-      500
-    );
+    pool = factory.getPool(wethAddr, usdcAddr, 500);
     emit log_named_address("Pool at fee 500", pool);
   }
 }
