@@ -223,6 +223,7 @@ contract LeveredPosition is LeveredPositionStorage, IFlashLoanReceiver {
       debtValue = (borrowedAssetPrice * debtAmount) / 1e18;
     }
 
+    // TODO check if positionValue > debtValue
     // s / ( s - b )
     return (positionValue * 1e18) / (positionValue - debtValue);
   }
@@ -378,7 +379,7 @@ contract LeveredPosition is LeveredPositionStorage, IFlashLoanReceiver {
       stableAssetPrice
     );
 
-    ICErc20(address(collateralMarket)).flash(flashLoanCollateralAmount, abi.encode(stableToBorrow));
+    collateralMarket.flash(flashLoanCollateralAmount, abi.encode(stableToBorrow));
     // the execution will first receive a callback to receiveFlashLoan()
     // then it continues from here
 

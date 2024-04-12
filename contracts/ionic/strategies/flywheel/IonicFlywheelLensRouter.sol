@@ -203,6 +203,7 @@ contract IonicFlywheelLensRouter {
     uint256 yieldValuePerBlock = (collateralValue * supplyRatePerBlock) / 1e18;
     uint256 interestOwedValuePerBlock = (borrowsValue * borrowRatePerBlock) / 1e18;
 
+    if (collateralValue == 0) return 0;
     return ((int256(yieldValuePerBlock) - int256(interestOwedValuePerBlock)) * blocksPerYear) / int256(collateralValue);
   }
 
