@@ -89,20 +89,28 @@ contract UniswapV3LiquidatorTest is IonicLiquidatorTest {
     _testLiquidatorLiquidate(uniV3PooForFlash);
   }
 
-  function testSupPair() public debuggingOnly fork(MODE_MAINNET) {
-    IUniswapV2Pair flashSwapPair = IUniswapV2Pair(0xf2e9C024F1C0B7a2a4ea11243C2D86A7b38DD72f);
-    IUniswapV3Pool flashSwapPool = IUniswapV3Pool(0xf2e9C024F1C0B7a2a4ea11243C2D86A7b38DD72f);
+  function testUniV3PoolForFee() public debuggingOnly fork(MODE_MAINNET) {
+    address wethAddr = 0x4200000000000000000000000000000000000006;
+    address usdcAddr = 0xd988097fb8612cc24eeC14542bC03424c656005f;
+    IERC20Upgradeable usdc = IERC20Upgradeable(usdcAddr);
+    IERC20Upgradeable weth = IERC20Upgradeable(wethAddr);
 
     IUniswapV2Router02 kimRouter = IUniswapV2Router02(0x5D61c537393cf21893BE619E36fC94cd73C77DD3);
+    address factoryAddress;
+    //factory = kimRouter.factory();
+    factoryAddress = 0xC33Ce0058004d44E7e1F366E5797A578fDF38584;
+    IUniswapV3Factory factory = IUniswapV3Factory(factoryAddress);
+    address pool;
 
-    emit log_named_address("Factory", kimRouter.factory());
+    uint256 feeConfig = liquidatorsRegistry.uniswapV3Fees(usdc, weth);
+    emit log_named_uint("feeConfig", feeConfig);
 
-    IUniswapV3Factory factory = IUniswapV3Factory(kimRouter.factory());
-    address pool = factory.getPool(
-      0x4200000000000000000000000000000000000006,
-      0xd988097fb8612cc24eeC14542bC03424c656005f,
-      500
-    );
-    emit log_named_address("Pool", pool);
+    if (feeConfig == 0) {
+      pool = factory.getPool(wethAddr, usdcAddr, uint24(feeConfig));
+      emit log_named_address("Pool at fee 0", pool);
+    }
+
+    pool = factory.getPool(wethAddr, usdcAddr, 500);
+    emit log_named_address("Pool at fee 500", pool);
   }
 }

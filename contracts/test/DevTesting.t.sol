@@ -16,11 +16,13 @@ import { MasterPriceOracle, BasePriceOracle } from "../oracles/MasterPriceOracle
 import { PoolLens } from "../PoolLens.sol";
 import { PoolLensSecondary } from "../PoolLensSecondary.sol";
 import { JumpRateModel } from "../compound/JumpRateModel.sol";
+import { LeveredPositionsLens } from "../ionic/levered/LeveredPositionsLens.sol";
 
 contract DevTesting is BaseTest {
   IonicComptroller pool = IonicComptroller(0xFB3323E24743Caf4ADD0fDCCFB268565c0685556);
   PoolLensSecondary lens2 = PoolLensSecondary(0x7Ea7BB80F3bBEE9b52e6Ed3775bA06C9C80D4154);
   PoolLens lens = PoolLens(0x431C87E08e2636733a945D742d25Ba77577ED480);
+  LeveredPositionsLens levPosLens;
 
   address deployer = 0x1155b614971f16758C92c4890eD338C9e3ede6b7;
   address multisig = 0x8Fba84867Ba458E7c6E2c024D2DE3d0b5C3ea1C2;
@@ -55,6 +57,7 @@ contract DevTesting is BaseTest {
       wethMarket = markets[0];
       usdcMarket = markets[1];
     }
+    levPosLens = LeveredPositionsLens(ap.getAddress("LeveredPositionsLens"));
   }
 
   function testModePoolBorrowers() public debuggingOnly fork(MODE_MAINNET) {
@@ -186,6 +189,16 @@ contract DevTesting is BaseTest {
     emit log_named_uint("borrowed", borrowed);
 
     pool.exitMarket(usdcMarketAddr);
+  }
+
+  function testBorrowRateAtRatio() public debuggingOnly fork(MODE_MAINNET) {
+    uint256 rate = levPosLens.getBorrowRateAtRatio(
+      ICErc20(0x71ef7EDa2Be775E5A7aa8afD02C45F059833e9d2),
+      ICErc20(0x59e710215d45F584f44c0FEe83DA6d43D762D857),
+      9988992945501686,
+      2e18
+    );
+    emit log_named_uint("borrow rate at ratio", rate);
   }
 
   function testAssetAsCollateralCap() public debuggingOnly fork(MODE_MAINNET) {
@@ -348,7 +361,10 @@ contract DevTesting is BaseTest {
   }
 
   function testModeAccountLiquidity() public debuggingOnly fork(MODE_MAINNET) {
-    address borrower = 0x0C387030a5D3AcDcde1A8DDaF26df31BbC1CE763;
+    _testAccountLiquidity(0x0C387030a5D3AcDcde1A8DDaF26df31BbC1CE763);
+  }
+
+  function _testAccountLiquidity(address borrower) internal {
     (uint256 error, uint256 collateralValue, uint256 liquidity, uint256 shortfall) = pool.getAccountLiquidity(borrower);
 
     emit log("");
@@ -356,11 +372,6 @@ contract DevTesting is BaseTest {
     emit log_named_uint("collateralValue", collateralValue);
     if (liquidity > 0) emit log_named_uint("liquidity", liquidity);
     if (shortfall > 0) emit log_named_uint("SHORTFALL", shortfall);
-  }
-
-  function testModeUsdcBorrow() public debuggingOnly fork(MODE_MAINNET) {
-    vm.prank(deployer);
-    require(usdcMarket.borrow(5e6) == 0, "can't borrow");
   }
 
   function testModeDeployMarket() public debuggingOnly fork(MODE_MAINNET) {
@@ -425,9 +436,13 @@ contract DevTesting is BaseTest {
   }
 
   function testRawCall() public debuggingOnly fork(MODE_MAINNET) {
-    address caller = 0x1155b614971f16758C92c4890eD338C9e3ede6b7;
-    address target = 0x431C87E08e2636733a945D742d25Ba77577ED480;
-    bytes memory data = hex"4a5844320000000000000000000000002be717340023c9e14c1bb12cb3ecbcfd3c3fb038";
+    address caller = 0xF70CBE91fB1b1AfdeB3C45Fb8CDD2E1249b5b75E;
+    address target = 0x9B506A03bBFf2a842866b10BC6732da72640cd45;
+
+    ERC20(WETH).allowance(caller, target);
+
+    bytes
+      memory data = hex"534da46000000000000000000000000071ef7eda2be775e5a7aa8afd02c45f059833e9d20000000000000000000000002be717340023c9e14c1bb12cb3ecbcfd3c3fb0380000000000000000000000004200000000000000000000000000000000000006000000000000000000000000000000000000000000000000001329713137a5260000000000000000000000000000000000000000000000000000000000000001";
     vm.prank(caller);
     _functionCall(target, data, "raw call failed");
   }
