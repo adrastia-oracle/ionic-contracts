@@ -12,6 +12,7 @@ import { DiamondExtension } from "../ionic/DiamondExtension.sol";
 import { ICErc20 } from "../compound/CTokenInterfaces.sol";
 import { ISwapRouter } from "../external/uniswap/ISwapRouter.sol";
 import { RedstoneAdapterPriceOracle } from "../oracles/default/RedstoneAdapterPriceOracle.sol";
+import { RedstoneAdapterPriceOracleWrsETH } from "../oracles/default/RedstoneAdapterPriceOracleWrsETH.sol";
 import { MasterPriceOracle, BasePriceOracle } from "../oracles/MasterPriceOracle.sol";
 import { PoolLens } from "../PoolLens.sol";
 import { PoolLensSecondary } from "../PoolLensSecondary.sol";
@@ -408,6 +409,22 @@ contract DevTesting is BaseTest {
     ERC20(MODE_WEETH).approve(address(weEthMarket), 1e36);
     errCode = weEthMarket.mint(0.01e18);
     require(errCode == 0, "should be unable to supply");
+  }
+
+  function testModeWrsETH() public debuggingOnly forkAtBlock(MODE_MAINNET, 6635923) {
+    address wrsEth = 0x4186BFC76E2E237523CBC30FD220FE055156b41F;
+    RedstoneAdapterPriceOracleWrsETH oracle = new RedstoneAdapterPriceOracleWrsETH(
+      0x7C1DAAE7BB0688C9bfE3A918A4224041c7177256
+    );
+    MasterPriceOracle mpo = MasterPriceOracle(ap.getAddress("MasterPriceOracle"));
+
+    BasePriceOracle[] memory oracles = new BasePriceOracle[](1);
+    oracles[0] = oracle;
+    vm.prank(multisig);
+    mpo.add(asArray(wrsEth), oracles);
+
+    uint256 price = mpo.price(wrsEth);
+    emit log_named_uint("price of wrsEth", price);
   }
 
   function _functionCall(
