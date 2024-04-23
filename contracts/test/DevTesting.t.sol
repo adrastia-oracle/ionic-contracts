@@ -13,6 +13,7 @@ import { ICErc20 } from "../compound/CTokenInterfaces.sol";
 import { ISwapRouter } from "../external/uniswap/ISwapRouter.sol";
 import { RedstoneAdapterPriceOracle } from "../oracles/default/RedstoneAdapterPriceOracle.sol";
 import { RedstoneAdapterPriceOracleWrsETH } from "../oracles/default/RedstoneAdapterPriceOracleWrsETH.sol";
+import { RedstoneAdapterPriceOracleWeETH } from "../oracles/default/RedstoneAdapterPriceOracleWeETH.sol";
 import { MasterPriceOracle, BasePriceOracle } from "../oracles/MasterPriceOracle.sol";
 import { PoolLens } from "../PoolLens.sol";
 import { PoolLensSecondary } from "../PoolLensSecondary.sol";
@@ -425,6 +426,23 @@ contract DevTesting is BaseTest {
 
     uint256 price = mpo.price(wrsEth);
     emit log_named_uint("price of wrsEth", price);
+  }
+
+  function testModeWeETH() public debuggingOnly forkAtBlock(MODE_MAINNET, 6861468) {
+    address weEth = 0x04C0599Ae5A44757c0af6F9eC3b93da8976c150A;
+    RedstoneAdapterPriceOracleWeETH oracle = new RedstoneAdapterPriceOracleWeETH(
+      0x7C1DAAE7BB0688C9bfE3A918A4224041c7177256
+    );
+    MasterPriceOracle mpo = MasterPriceOracle(ap.getAddress("MasterPriceOracle"));
+
+    BasePriceOracle[] memory oracles = new BasePriceOracle[](1);
+    oracles[0] = oracle;
+    vm.prank(multisig);
+    mpo.add(asArray(weEth), oracles);
+
+    uint256 price = mpo.price(weEth);
+    emit log_named_uint("price of weEth", price);
+    assertEq(price, 1036212437077011599);
   }
 
   function _functionCall(
