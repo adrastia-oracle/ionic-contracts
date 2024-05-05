@@ -205,12 +205,7 @@ contract DevTesting is BaseTest {
   }
 
   function testBorrowRateAtRatio() public debuggingOnly fork(MODE_MAINNET) {
-    uint256 rate = levPosLens.getBorrowRateAtRatio(
-      wethMarket,
-      ezEthMarket,
-      9988992945501686,
-      2e18
-    );
+    uint256 rate = levPosLens.getBorrowRateAtRatio(wethMarket, ezEthMarket, 9988992945501686, 2e18);
     emit log_named_uint("borrow rate at ratio", rate);
   }
 
