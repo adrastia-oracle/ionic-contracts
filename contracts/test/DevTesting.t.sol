@@ -33,6 +33,7 @@ contract DevTesting is BaseTest {
   ICErc20 usdcMarket;
   ICErc20 usdtMarket;
   ICErc20 wbtcMarket;
+  ICErc20 ezEthMarket;
 
   // mode mainnet assets
   address WETH = 0x4200000000000000000000000000000000000006;
@@ -54,6 +55,7 @@ contract DevTesting is BaseTest {
       usdcMarket = ICErc20(0x2BE717340023C9e14C1Bb12cb3ecBcfd3c3fB038);
       usdtMarket = ICErc20(0x94812F2eEa03A49869f95e1b5868C6f3206ee3D3);
       wbtcMarket = ICErc20(0xd70254C3baD29504789714A7c69d60Ec1127375C);
+      ezEthMarket = ICErc20(0x59e710215d45F584f44c0FEe83DA6d43D762D857);
     } else {
       ICErc20[] memory markets = pool.getAllMarkets();
       wethMarket = markets[0];
@@ -140,6 +142,17 @@ contract DevTesting is BaseTest {
     }
   }
 
+  function testGetCashError() public debuggingOnly fork(MODE_MAINNET) {
+    ICErc20 market = ICErc20(0x49950319aBE7CE5c3A6C90698381b45989C99b46);
+    market.getCash();
+  }
+
+  function testWrsEthBalanceOfError() public debuggingOnly fork(MODE_MAINNET) {
+    address wrsEthMarketAddress = 0x49950319aBE7CE5c3A6C90698381b45989C99b46;
+    ERC20 wrsEth = ERC20(0xe7903B1F75C534Dd8159b313d92cDCfbC62cB3Cd);
+    wrsEth.balanceOf(0x1155b614971f16758C92c4890eD338C9e3ede6b7);
+  }
+
   function testModeRepay() public debuggingOnly fork(MODE_MAINNET) {
     address user = 0x1A3C4E9B49e4fc595fB7e5f723159bA73a9426e7;
     ICErc20 market = usdcMarket;
@@ -194,12 +207,7 @@ contract DevTesting is BaseTest {
   }
 
   function testBorrowRateAtRatio() public debuggingOnly fork(MODE_MAINNET) {
-    uint256 rate = levPosLens.getBorrowRateAtRatio(
-      ICErc20(0x71ef7EDa2Be775E5A7aa8afD02C45F059833e9d2),
-      ICErc20(0x59e710215d45F584f44c0FEe83DA6d43D762D857),
-      9988992945501686,
-      2e18
-    );
+    uint256 rate = levPosLens.getBorrowRateAtRatio(wethMarket, ezEthMarket, 9988992945501686, 2e18);
     emit log_named_uint("borrow rate at ratio", rate);
   }
 
@@ -313,7 +321,6 @@ contract DevTesting is BaseTest {
 
   function testModeBorrowRate() public fork(MODE_MAINNET) {
     //ICErc20[] memory markets = pool.getAllMarkets();
-    ICErc20 ezEthMarket = ICErc20(0x59e710215d45F584f44c0FEe83DA6d43D762D857);
 
     IonicComptroller pool = ezEthMarket.comptroller();
     vm.prank(pool.admin());
@@ -470,14 +477,14 @@ contract DevTesting is BaseTest {
     return returndata;
   }
 
-  function testRawCall() public debuggingOnly fork(MODE_MAINNET) {
-    address caller = 0xF70CBE91fB1b1AfdeB3C45Fb8CDD2E1249b5b75E;
+  function testRawCall() public debuggingOnly forkAtBlock(MODE_MAINNET, 7337902) {
+    address caller = 0x2b81E6C41636BaEa95a1Da5c688cCcd938f9Af33;
     address target = 0x9B506A03bBFf2a842866b10BC6732da72640cd45;
 
     ERC20(WETH).allowance(caller, target);
 
     bytes
-      memory data = hex"534da46000000000000000000000000071ef7eda2be775e5a7aa8afd02c45f059833e9d20000000000000000000000002be717340023c9e14c1bb12cb3ecbcfd3c3fb0380000000000000000000000004200000000000000000000000000000000000006000000000000000000000000000000000000000000000000001329713137a5260000000000000000000000000000000000000000000000000000000000000001";
+      memory data = hex"534da46000000000000000000000000059e710215d45f584f44c0fee83da6d43d762d8570000000000000000000000002be717340023c9e14c1bb12cb3ecbcfd3c3fb0380000000000000000000000002416092f143378750bb29b79ed961ab195cceea500000000000000000000000000000000000000000000000015faebcf6161ab5d00000000000000000000000000000000000000000000000029a2241af62c0000";
     vm.prank(caller);
     _functionCall(target, data, "raw call failed");
   }
