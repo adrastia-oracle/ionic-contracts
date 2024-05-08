@@ -110,12 +110,7 @@ contract PoolLens is Initializable {
    */
   function getPublicPoolsWithData()
     external
-    returns (
-      uint256[] memory,
-      PoolDirectory.Pool[] memory,
-      IonicPoolData[] memory,
-      bool[] memory
-    )
+    returns (uint256[] memory, PoolDirectory.Pool[] memory, IonicPoolData[] memory, bool[] memory)
   {
     (uint256[] memory indexes, PoolDirectory.Pool[] memory publicPools) = directory.getPublicPools();
     (IonicPoolData[] memory data, bool[] memory errored) = getPoolsData(publicPools);
@@ -127,15 +122,9 @@ contract PoolLens is Initializable {
    * @dev This function is not designed to be called in a transaction: it is too gas-intensive.
    * Ideally, we can add the `view` modifier, but many cToken functions potentially modify the state.
    */
-  function getPublicPoolsByVerificationWithData(bool whitelistedAdmin)
-    external
-    returns (
-      uint256[] memory,
-      PoolDirectory.Pool[] memory,
-      IonicPoolData[] memory,
-      bool[] memory
-    )
-  {
+  function getPublicPoolsByVerificationWithData(
+    bool whitelistedAdmin
+  ) external returns (uint256[] memory, PoolDirectory.Pool[] memory, IonicPoolData[] memory, bool[] memory) {
     (uint256[] memory indexes, PoolDirectory.Pool[] memory publicPools) = directory.getPublicPoolsByVerification(
       whitelistedAdmin
     );
@@ -148,15 +137,9 @@ contract PoolLens is Initializable {
    * @dev This function is not designed to be called in a transaction: it is too gas-intensive.
    * Ideally, we can add the `view` modifier, but many cToken functions potentially modify the state.
    */
-  function getPoolsByAccountWithData(address account)
-    external
-    returns (
-      uint256[] memory,
-      PoolDirectory.Pool[] memory,
-      IonicPoolData[] memory,
-      bool[] memory
-    )
-  {
+  function getPoolsByAccountWithData(
+    address account
+  ) external returns (uint256[] memory, PoolDirectory.Pool[] memory, IonicPoolData[] memory, bool[] memory) {
     (uint256[] memory indexes, PoolDirectory.Pool[] memory accountPools) = directory.getPoolsByAccount(account);
     (IonicPoolData[] memory data, bool[] memory errored) = getPoolsData(accountPools);
     return (indexes, accountPools, data, errored);
@@ -167,15 +150,9 @@ contract PoolLens is Initializable {
    * @dev This function is not designed to be called in a transaction: it is too gas-intensive.
    * Ideally, we can add the `view` modifier, but many cToken functions potentially modify the state.
    */
-  function getPoolsOIonicrWithData(address user)
-    external
-    returns (
-      uint256[] memory,
-      PoolDirectory.Pool[] memory,
-      IonicPoolData[] memory,
-      bool[] memory
-    )
-  {
+  function getPoolsOIonicrWithData(
+    address user
+  ) external returns (uint256[] memory, PoolDirectory.Pool[] memory, IonicPoolData[] memory, bool[] memory) {
     (uint256[] memory indexes, PoolDirectory.Pool[] memory userPools) = directory.getPoolsOfUser(user);
     (IonicPoolData[] memory data, bool[] memory errored) = getPoolsData(userPools);
     return (indexes, userPools, data, errored);
@@ -210,16 +187,9 @@ contract PoolLens is Initializable {
   /**
    * @notice Returns total supply balance (in ETH), total borrow balance (in ETH), underlying token addresses, and underlying token symbols of a Ionic pool.
    */
-  function getPoolSummary(IonicComptroller comptroller)
-    external
-    returns (
-      uint256,
-      uint256,
-      address[] memory,
-      string[] memory,
-      bool
-    )
-  {
+  function getPoolSummary(
+    IonicComptroller comptroller
+  ) external returns (uint256, uint256, address[] memory, string[] memory, bool) {
     uint256 totalBorrow = 0;
     uint256 totalSupply = 0;
     ICErc20[] memory cTokens = comptroller.getAllMarkets();
@@ -359,7 +329,10 @@ contract PoolLens is Initializable {
     return (detailedAssets);
   }
 
-  function getBorrowCapsPerCollateral(ICErc20 borrowedAsset, IonicComptroller comptroller)
+  function getBorrowCapsPerCollateral(
+    ICErc20 borrowedAsset,
+    IonicComptroller comptroller
+  )
     internal
     view
     returns (
@@ -458,15 +431,9 @@ contract PoolLens is Initializable {
    * @notice returns the total supply cap for each asset in the pool and the total non-whitelist supplied assets
    * @dev This function is not designed to be called in a transaction: it is too gas-intensive.
    */
-  function getSupplyCapsDataForPool(IonicComptroller comptroller)
-    public
-    view
-    returns (
-      address[] memory,
-      uint256[] memory,
-      uint256[] memory
-    )
-  {
+  function getSupplyCapsDataForPool(
+    IonicComptroller comptroller
+  ) public view returns (address[] memory, uint256[] memory, uint256[] memory) {
     ICErc20[] memory poolMarkets = comptroller.getAllMarkets();
 
     address[] memory assets = new address[](poolMarkets.length);
@@ -488,7 +455,9 @@ contract PoolLens is Initializable {
    * @notice returns the total borrow cap and the per collateral borrowing cap/blacklist for the asset
    * @dev This function is not designed to be called in a transaction: it is too gas-intensive.
    */
-  function getBorrowCapsForAsset(ICErc20 asset)
+  function getBorrowCapsForAsset(
+    ICErc20 asset
+  )
     public
     view
     returns (
@@ -507,7 +476,9 @@ contract PoolLens is Initializable {
    * @notice returns the total borrow cap, the per collateral borrowing cap/blacklist for the asset and the total non-whitelist borrows
    * @dev This function is not designed to be called in a transaction: it is too gas-intensive.
    */
-  function getBorrowCapsDataForAsset(ICErc20 asset)
+  function getBorrowCapsDataForAsset(
+    ICErc20 asset
+  )
     public
     view
     returns (
@@ -532,11 +503,9 @@ contract PoolLens is Initializable {
    * Note that the whitelist does not have to be enforced.
    * @dev This function is not designed to be called in a transaction: it is too gas-intensive.
    */
-  function getWhitelistedPoolsByAccount(address account)
-    public
-    view
-    returns (uint256[] memory, PoolDirectory.Pool[] memory)
-  {
+  function getWhitelistedPoolsByAccount(
+    address account
+  ) public view returns (uint256[] memory, PoolDirectory.Pool[] memory) {
     (, PoolDirectory.Pool[] memory pools) = directory.getActivePools();
     uint256 arrayLength = 0;
 
@@ -569,15 +538,9 @@ contract PoolLens is Initializable {
    * @dev This function is not designed to be called in a transaction: it is too gas-intensive.
    * Ideally, we can add the `view` modifier, but many cToken functions potentially modify the state.
    */
-  function getWhitelistedPoolsByAccountWithData(address account)
-    external
-    returns (
-      uint256[] memory,
-      PoolDirectory.Pool[] memory,
-      IonicPoolData[] memory,
-      bool[] memory
-    )
-  {
+  function getWhitelistedPoolsByAccountWithData(
+    address account
+  ) external returns (uint256[] memory, PoolDirectory.Pool[] memory, IonicPoolData[] memory, bool[] memory) {
     (uint256[] memory indexes, PoolDirectory.Pool[] memory accountPools) = getWhitelistedPoolsByAccount(account);
     (IonicPoolData[] memory data, bool[] memory errored) = getPoolsData(accountPools);
     return (indexes, accountPools, data, errored);
@@ -585,6 +548,34 @@ contract PoolLens is Initializable {
 
   function getHealthFactor(address user, IonicComptroller pool) external view returns (uint256) {
     (uint256 err, uint256 collateralValue, uint256 liquidity, uint256 shortfall) = pool.getAccountLiquidity(user);
+
+    if (err != 0) revert ComptrollerError(err);
+
+    if (shortfall > 0) {
+      // HF < 1.0
+      return (collateralValue * 1e18) / (collateralValue + shortfall);
+    } else {
+      // HF >= 1.0
+      if (collateralValue <= liquidity) return type(uint256).max;
+      else return (collateralValue * 1e18) / (collateralValue - liquidity);
+    }
+  }
+
+  function getHealthFactorHypothetical(
+    IonicComptroller pool,
+    address account,
+    address cTokenModify,
+    uint256 redeemTokens,
+    uint256 borrowAmount,
+    uint256 repayAmount
+  ) external view returns (uint256) {
+    (uint256 err, uint256 collateralValue, uint256 liquidity, uint256 shortfall) = pool.getHypotheticalAccountLiquidity(
+      account,
+      cTokenModify,
+      redeemTokens,
+      borrowAmount,
+      repayAmount
+    );
 
     if (err != 0) revert ComptrollerError(err);
 
