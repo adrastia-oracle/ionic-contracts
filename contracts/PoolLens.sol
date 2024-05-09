@@ -465,8 +465,8 @@ contract PoolLens is Initializable {
       address[] memory,
       uint256[] memory,
       uint256[] memory
-      )
-    {
+    )
+  {
     ICErc20[] memory poolMarkets = comptroller.getAllMarkets();
 
     address[] memory assets = new address[](poolMarkets.length);
@@ -533,8 +533,8 @@ contract PoolLens is Initializable {
    * @dev This function is not designed to be called in a transaction: it is too gas-intensive.
    */
   function getWhitelistedPoolsByAccount(address account)
-    public 
-    view 
+    public
+    view
     returns (uint256[] memory, PoolDirectory.Pool[] memory) 
   {
     (, PoolDirectory.Pool[] memory pools) = directory.getActivePools();
