@@ -19,13 +19,16 @@ import "./external/uniswap/UniswapV2Library.sol";
 
 import { ICErc20 } from "./compound/CTokenInterfaces.sol";
 
+import "@pythnetwork/express-relay-sdk-solidity/IExpressRelay.sol";
+import "@pythnetwork/express-relay-sdk-solidity/IExpressRelayFeeReceiver.sol";
+
 /**
  * @title IonicLiquidator
  * @author David Lucid <david@rari.capital> (https://github.com/davidlucid)
  * @notice IonicLiquidator safely liquidates unhealthy borrowers (with flashloan support).
  * @dev Do not transfer NATIVE or tokens directly to this address. Only send NATIVE here when using a method, and only approve tokens for transfer to here when using a method. Direct NATIVE transfers will be rejected and direct token transfers will be lost.
  */
-contract IonicLiquidator is OwnableUpgradeable, ILiquidator, IUniswapV2Callee {
+contract IonicLiquidator is OwnableUpgradeable, ILiquidator, IUniswapV2Callee, IExpressRelayFeeReceiver {
   using AddressUpgradeable for address payable;
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -64,11 +67,17 @@ contract IonicLiquidator is OwnableUpgradeable, ILiquidator, IUniswapV2Callee {
    */
   uint8 public flashSwapFee;
 
-  function initialize(
-    address _wtoken,
-    address _uniswapV2router,
-    uint8 _flashSwapFee
-  ) external initializer {
+  /**
+   * @dev Addres of Pyth Express Relay for preventing value leakage in liquidations.
+   */
+  IExpressRelay private expressRelay;
+
+  modifier onlyPERPermissioned(address borrower) {
+    require(expressRelay.isPermissioned(address(this), abi.encode(borrower)), "invalid liquidation");
+    _;
+  }
+
+  function initialize(address _wtoken, address _uniswapV2router, uint8 _flashSwapFee) external initializer {
     __Ownable_init();
     require(_uniswapV2router != address(0), "_uniswapV2router not defined.");
     W_NATIVE_ADDRESS = _wtoken;
@@ -81,11 +90,7 @@ contract IonicLiquidator is OwnableUpgradeable, ILiquidator, IUniswapV2Callee {
   /**
    * @dev Internal function to approve unlimited tokens of `erc20Contract` to `to`.
    */
-  function safeApprove(
-    IERC20Upgradeable token,
-    address to,
-    uint256 minAmount
-  ) private {
+  function safeApprove(IERC20Upgradeable token, address to, uint256 minAmount) private {
     uint256 allowance = token.allowance(address(this), to);
 
     if (allowance < minAmount) {
@@ -97,11 +102,7 @@ contract IonicLiquidator is OwnableUpgradeable, ILiquidator, IUniswapV2Callee {
   /**
    * @dev Internal function to approve
    */
-  function justApprove(
-    IERC20Upgradeable token,
-    address to,
-    uint256 amount
-  ) private {
+  function justApprove(IERC20Upgradeable token, address to, uint256 amount) private {
     token.approve(to, amount);
   }
 
@@ -119,7 +120,7 @@ contract IonicLiquidator is OwnableUpgradeable, ILiquidator, IUniswapV2Callee {
     ICErc20 cErc20,
     ICErc20 cTokenCollateral,
     uint256 minOutputAmount
-  ) external returns (uint256) {
+  ) external onlyPERPermissioned(borrower) returns (uint256) {
     // Transfer tokens in, approve to cErc20, and liquidate borrow
     require(repayAmount > 0, "Repay amount (transaction value) must be greater than 0.");
     IERC20Upgradeable underlying = IERC20Upgradeable(cErc20.underlying());
@@ -148,10 +149,9 @@ contract IonicLiquidator is OwnableUpgradeable, ILiquidator, IUniswapV2Callee {
    * @notice Safely liquidate an unhealthy loan, confirming that at least `minProfitAmount` in NATIVE profit is seized.
    * @param vars @see LiquidateToTokensWithFlashSwapVars.
    */
-  function safeLiquidateToTokensWithFlashLoan(LiquidateToTokensWithFlashSwapVars calldata vars)
-    external
-    returns (uint256)
-  {
+  function safeLiquidateToTokensWithFlashLoan(
+    LiquidateToTokensWithFlashSwapVars calldata vars
+  ) external onlyPERPermissioned(vars.borrower) returns (uint256) {
     // Input validation
     require(vars.repayAmount > 0, "Repay amount must be greater than 0.");
 
@@ -200,14 +200,24 @@ contract IonicLiquidator is OwnableUpgradeable, ILiquidator, IUniswapV2Callee {
   }
 
   /**
+   * @notice receiveAuctionProceedings function - receives native token from the express relay
+   * You can use permission key to distribute the received funds to users who got liquidated, LPs, etc...
+   */
+  function receiveAuctionProceedings(bytes calldata permissionKey) external payable {}
+
+  function withdrawAll() external onlyOwner {
+    uint256 balance = address(this).balance;
+    require(balance > 0, "No Ether left to withdraw");
+
+    // Transfer all Ether to the owner
+    (bool sent, ) = msg.sender.call{ value: balance }("");
+    require(sent, "Failed to send Ether");
+  }
+
+  /**
    * @dev Callback function for Uniswap flashloans.
    */
-  function uniswapV2Call(
-    address,
-    uint256,
-    uint256,
-    bytes calldata data
-  ) public override {
+  function uniswapV2Call(address, uint256, uint256, bytes calldata data) public override {
     // Liquidate unhealthy borrow, exchange seized collateral, return flashloaned funds, and exchange profit
     // Decode params
     LiquidateToTokensWithFlashSwapVars memory vars = abi.decode(data[4:], (LiquidateToTokensWithFlashSwapVars));
@@ -220,21 +230,11 @@ contract IonicLiquidator is OwnableUpgradeable, ILiquidator, IUniswapV2Callee {
   /**
    * @dev Callback function for PCS flashloans.
    */
-  function pancakeCall(
-    address sender,
-    uint256 amount0,
-    uint256 amount1,
-    bytes calldata data
-  ) external {
+  function pancakeCall(address sender, uint256 amount0, uint256 amount1, bytes calldata data) external {
     uniswapV2Call(sender, amount0, amount1, data);
   }
 
-  function moraswapCall(
-    address sender,
-    uint256 amount0,
-    uint256 amount1,
-    bytes calldata data
-  ) external {
+  function moraswapCall(address sender, uint256 amount0, uint256 amount1, bytes calldata data) external {
     uniswapV2Call(sender, amount0, amount1, data);
   }
 
@@ -405,10 +405,10 @@ contract IonicLiquidator is OwnableUpgradeable, ILiquidator, IUniswapV2Callee {
    * Each whitelisted redemption strategy has to be checked to not be able to
    * call `selfdestruct` with the `delegatecall` call in `redeemCustomCollateral`
    */
-  function _whitelistRedemptionStrategies(IRedemptionStrategy[] calldata strategies, bool[] calldata whitelisted)
-    external
-    onlyOwner
-  {
+  function _whitelistRedemptionStrategies(
+    IRedemptionStrategy[] calldata strategies,
+    bool[] calldata whitelisted
+  ) external onlyOwner {
     require(
       strategies.length > 0 && strategies.length == whitelisted.length,
       "list of strategies empty or whitelist does not match its length"
@@ -417,6 +417,10 @@ contract IonicLiquidator is OwnableUpgradeable, ILiquidator, IUniswapV2Callee {
     for (uint256 i = 0; i < strategies.length; i++) {
       redemptionStrategiesWhitelist[address(strategies[i])] = whitelisted[i];
     }
+  }
+
+  function setExpressRelay(address _expressRelay) external onlyOwner {
+    expressRelay = IExpressRelay(_expressRelay);
   }
 
   /**
