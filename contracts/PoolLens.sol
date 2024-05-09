@@ -42,6 +42,7 @@ contract PoolLens is Initializable {
     string[] memory _uniswapLPTokenSymbols,
     string[] memory _uniswapLPTokenDisplayNames
   ) public initializer {
+    require(address(_directory) != address(0), "PoolDirectory instance cannot be the zero address.");
     require(
       _hardcodedAddresses.length == _hardcodedNames.length && _hardcodedAddresses.length == _hardcodedSymbols.length,
       "Hardcoded addresses lengths not equal."
@@ -126,9 +127,7 @@ contract PoolLens is Initializable {
    * @dev This function is not designed to be called in a transaction: it is too gas-intensive.
    * Ideally, we can add the `view` modifier, but many cToken functions potentially modify the state.
    */
-  function getPublicPoolsByVerificationWithData(
-    bool whitelistedAdmin
-  )
+  function getPublicPoolsByVerificationWithData(bool whitelistedAdmin)
     external
     returns (
       uint256[] memory,
@@ -149,9 +148,7 @@ contract PoolLens is Initializable {
    * @dev This function is not designed to be called in a transaction: it is too gas-intensive.
    * Ideally, we can add the `view` modifier, but many cToken functions potentially modify the state.
    */
-  function getPoolsByAccountWithData(
-    address account
-  )
+  function getPoolsByAccountWithData(address account)
     external
     returns (
       uint256[] memory,
@@ -170,9 +167,7 @@ contract PoolLens is Initializable {
    * @dev This function is not designed to be called in a transaction: it is too gas-intensive.
    * Ideally, we can add the `view` modifier, but many cToken functions potentially modify the state.
    */
-  function getPoolsOIonicrWithData(
-    address user
-  )
+  function getPoolsOIonicrWithData(address user)
     external
     returns (
       uint256[] memory,
@@ -215,16 +210,15 @@ contract PoolLens is Initializable {
   /**
    * @notice Returns total supply balance (in ETH), total borrow balance (in ETH), underlying token addresses, and underlying token symbols of a Ionic pool.
    */
-  function getPoolSummary(
-    IonicComptroller comptroller
-  ) external
+  function getPoolSummary(IonicComptroller comptroller)
+    external
     returns (
       uint256,
       uint256,
       address[] memory,
       string[] memory,
       bool
-    ) 
+    )
   {
     uint256 totalBorrow = 0;
     uint256 totalSupply = 0;
@@ -251,13 +245,7 @@ contract PoolLens is Initializable {
     }
 
     bool whitelistedAdmin = directory.adminWhitelist(comptroller.admin());
-    return (
-      totalSupply,
-      totalBorrow,
-      underlyingTokens,
-      underlyingSymbols,
-      whitelistedAdmin
-    );
+    return (totalSupply, totalBorrow, underlyingTokens, underlyingSymbols, whitelistedAdmin);
   }
 
   /**
@@ -470,9 +458,15 @@ contract PoolLens is Initializable {
    * @notice returns the total supply cap for each asset in the pool and the total non-whitelist supplied assets
    * @dev This function is not designed to be called in a transaction: it is too gas-intensive.
    */
-  function getSupplyCapsDataForPool(
-    IonicComptroller comptroller
-  ) public view returns (address[] memory, uint256[] memory, uint256[] memory) {
+  function getSupplyCapsDataForPool(IonicComptroller comptroller)
+    public
+    view
+    returns (
+      address[] memory,
+      uint256[] memory,
+      uint256[] memory
+      )
+    {
     ICErc20[] memory poolMarkets = comptroller.getAllMarkets();
 
     address[] memory assets = new address[](poolMarkets.length);
@@ -538,9 +532,8 @@ contract PoolLens is Initializable {
    * Note that the whitelist does not have to be enforced.
    * @dev This function is not designed to be called in a transaction: it is too gas-intensive.
    */
-  function getWhitelistedPoolsByAccount(
-    address account
-  ) public 
+  function getWhitelistedPoolsByAccount(address account)
+    public 
     view 
     returns (uint256[] memory, PoolDirectory.Pool[] memory) 
   {
@@ -576,9 +569,7 @@ contract PoolLens is Initializable {
    * @dev This function is not designed to be called in a transaction: it is too gas-intensive.
    * Ideally, we can add the `view` modifier, but many cToken functions potentially modify the state.
    */
-  function getWhitelistedPoolsByAccountWithData(
-    address account
-  )
+  function getWhitelistedPoolsByAccountWithData(address account)
     external
     returns (
       uint256[] memory,
