@@ -42,7 +42,6 @@ contract PoolLens is Initializable {
     string[] memory _uniswapLPTokenSymbols,
     string[] memory _uniswapLPTokenDisplayNames
   ) public initializer {
-    require(address(_directory) != address(0), "PoolDirectory instance cannot be the zero address.");
     require(
       _hardcodedAddresses.length == _hardcodedNames.length && _hardcodedAddresses.length == _hardcodedSymbols.length,
       "Hardcoded addresses lengths not equal."
@@ -110,7 +109,12 @@ contract PoolLens is Initializable {
    */
   function getPublicPoolsWithData()
     external
-    returns (uint256[] memory, PoolDirectory.Pool[] memory, IonicPoolData[] memory, bool[] memory)
+    returns (
+      uint256[] memory,
+      PoolDirectory.Pool[] memory,
+      IonicPoolData[] memory,
+      bool[] memory
+    )
   {
     (uint256[] memory indexes, PoolDirectory.Pool[] memory publicPools) = directory.getPublicPools();
     (IonicPoolData[] memory data, bool[] memory errored) = getPoolsData(publicPools);
@@ -124,7 +128,15 @@ contract PoolLens is Initializable {
    */
   function getPublicPoolsByVerificationWithData(
     bool whitelistedAdmin
-  ) external returns (uint256[] memory, PoolDirectory.Pool[] memory, IonicPoolData[] memory, bool[] memory) {
+  )
+    external
+    returns (
+      uint256[] memory,
+      PoolDirectory.Pool[] memory,
+      IonicPoolData[] memory,
+      bool[] memory
+    )
+  {
     (uint256[] memory indexes, PoolDirectory.Pool[] memory publicPools) = directory.getPublicPoolsByVerification(
       whitelistedAdmin
     );
@@ -139,7 +151,15 @@ contract PoolLens is Initializable {
    */
   function getPoolsByAccountWithData(
     address account
-  ) external returns (uint256[] memory, PoolDirectory.Pool[] memory, IonicPoolData[] memory, bool[] memory) {
+  )
+    external
+    returns (
+      uint256[] memory,
+      PoolDirectory.Pool[] memory,
+      IonicPoolData[] memory,
+      bool[] memory
+    )
+  {
     (uint256[] memory indexes, PoolDirectory.Pool[] memory accountPools) = directory.getPoolsByAccount(account);
     (IonicPoolData[] memory data, bool[] memory errored) = getPoolsData(accountPools);
     return (indexes, accountPools, data, errored);
@@ -152,7 +172,15 @@ contract PoolLens is Initializable {
    */
   function getPoolsOIonicrWithData(
     address user
-  ) external returns (uint256[] memory, PoolDirectory.Pool[] memory, IonicPoolData[] memory, bool[] memory) {
+  )
+    external
+    returns (
+      uint256[] memory,
+      PoolDirectory.Pool[] memory,
+      IonicPoolData[] memory,
+      bool[] memory
+    )
+  {
     (uint256[] memory indexes, PoolDirectory.Pool[] memory userPools) = directory.getPoolsOfUser(user);
     (IonicPoolData[] memory data, bool[] memory errored) = getPoolsData(userPools);
     return (indexes, userPools, data, errored);
@@ -189,7 +217,15 @@ contract PoolLens is Initializable {
    */
   function getPoolSummary(
     IonicComptroller comptroller
-  ) external returns (uint256, uint256, address[] memory, string[] memory, bool) {
+  ) external
+    returns (
+      uint256,
+      uint256,
+      address[] memory,
+      string[] memory,
+      bool
+    ) 
+  {
     uint256 totalBorrow = 0;
     uint256 totalSupply = 0;
     ICErc20[] memory cTokens = comptroller.getAllMarkets();
@@ -215,7 +251,13 @@ contract PoolLens is Initializable {
     }
 
     bool whitelistedAdmin = directory.adminWhitelist(comptroller.admin());
-    return (totalSupply, totalBorrow, underlyingTokens, underlyingSymbols, whitelistedAdmin);
+    return (
+      totalSupply,
+      totalBorrow,
+      underlyingTokens,
+      underlyingSymbols,
+      whitelistedAdmin
+    );
   }
 
   /**
@@ -329,10 +371,7 @@ contract PoolLens is Initializable {
     return (detailedAssets);
   }
 
-  function getBorrowCapsPerCollateral(
-    ICErc20 borrowedAsset,
-    IonicComptroller comptroller
-  )
+  function getBorrowCapsPerCollateral(ICErc20 borrowedAsset, IonicComptroller comptroller)
     internal
     view
     returns (
@@ -455,9 +494,7 @@ contract PoolLens is Initializable {
    * @notice returns the total borrow cap and the per collateral borrowing cap/blacklist for the asset
    * @dev This function is not designed to be called in a transaction: it is too gas-intensive.
    */
-  function getBorrowCapsForAsset(
-    ICErc20 asset
-  )
+  function getBorrowCapsForAsset(ICErc20 asset)
     public
     view
     returns (
@@ -476,9 +513,7 @@ contract PoolLens is Initializable {
    * @notice returns the total borrow cap, the per collateral borrowing cap/blacklist for the asset and the total non-whitelist borrows
    * @dev This function is not designed to be called in a transaction: it is too gas-intensive.
    */
-  function getBorrowCapsDataForAsset(
-    ICErc20 asset
-  )
+  function getBorrowCapsDataForAsset(ICErc20 asset)
     public
     view
     returns (
@@ -505,7 +540,10 @@ contract PoolLens is Initializable {
    */
   function getWhitelistedPoolsByAccount(
     address account
-  ) public view returns (uint256[] memory, PoolDirectory.Pool[] memory) {
+  ) public 
+    view 
+    returns (uint256[] memory, PoolDirectory.Pool[] memory) 
+  {
     (, PoolDirectory.Pool[] memory pools) = directory.getActivePools();
     uint256 arrayLength = 0;
 
@@ -540,7 +578,15 @@ contract PoolLens is Initializable {
    */
   function getWhitelistedPoolsByAccountWithData(
     address account
-  ) external returns (uint256[] memory, PoolDirectory.Pool[] memory, IonicPoolData[] memory, bool[] memory) {
+  )
+    external
+    returns (
+      uint256[] memory,
+      PoolDirectory.Pool[] memory,
+      IonicPoolData[] memory,
+      bool[] memory
+    )
+  {
     (uint256[] memory indexes, PoolDirectory.Pool[] memory accountPools) = getWhitelistedPoolsByAccount(account);
     (IonicPoolData[] memory data, bool[] memory errored) = getPoolsData(accountPools);
     return (indexes, accountPools, data, errored);
