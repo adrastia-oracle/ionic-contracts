@@ -722,6 +722,7 @@ contract Comptroller is ComptrollerBase, ComptrollerInterface, ComptrollerErrorR
     Exp tokensToDenom;
     uint256 borrowCapForCollateral;
     uint256 borrowedAssetPrice;
+    uint256 assetAsCollateralValueCap;
   }
 
   function getAccountLiquidity(address account)
@@ -849,7 +850,7 @@ contract Comptroller is ComptrollerBase, ComptrollerInterface, ComptrollerErrorR
       }
       {
         // Exclude the asset-to-be-borrowed from the liquidity, except for when redeeming
-        uint256 assetAsCollateralValueCap = asComptrollerExtension().getAssetAsCollateralValueCap(
+        vars.assetAsCollateralValueCap = asComptrollerExtension().getAssetAsCollateralValueCap(
           vars.asset,
           cTokenModify,
           redeemTokens > 0,
@@ -858,7 +859,7 @@ contract Comptroller is ComptrollerBase, ComptrollerInterface, ComptrollerErrorR
 
         // accumulate the collateral value to sumCollateral
         uint256 assetCollateralValue = mul_ScalarTruncate(vars.tokensToDenom, vars.cTokenBalance);
-        if (assetCollateralValue > assetAsCollateralValueCap) assetCollateralValue = assetAsCollateralValueCap;
+        if (assetCollateralValue > vars.assetAsCollateralValueCap) assetCollateralValue = vars.assetAsCollateralValueCap;
         vars.sumCollateral += assetCollateralValue;
       }
 

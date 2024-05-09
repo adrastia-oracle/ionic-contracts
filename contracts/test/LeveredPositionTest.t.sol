@@ -86,13 +86,16 @@ contract LeveredPositionLensTest is BaseTest {
   }
 
   function testPrintLeveredPositions() public debuggingOnly fork(POLYGON_MAINNET) {
-    address[] memory markets = factory.getWhitelistedCollateralMarkets();
+    address[] memory accounts = factory.getAccountsWithOpenPositions();
 
-    emit log_named_array("markets", markets);
+    emit log_named_array("accounts", accounts);
 
-    for (uint256 j = 0; j < markets.length; j++) {
-      address[] memory borrowable = factory.getBorrowableMarketsByCollateral(ICErc20(markets[j]));
-      emit log_named_array("borrowable", borrowable);
+    for (uint256 j = 0; j < accounts.length; j++) {
+      address[] memory positions;
+      bool[] memory closed;
+      (positions, closed) = factory.getPositionsByAccount(accounts[j]);
+      emit log_named_array("positions", positions);
+      //emit log_named_array("closed", closed);
     }
   }
 }
