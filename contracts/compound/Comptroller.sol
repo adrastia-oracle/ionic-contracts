@@ -769,7 +769,7 @@ contract Comptroller is ComptrollerBase, ComptrollerInterface, ComptrollerErrorR
       uint256,
       uint256,
       uint256
-    ) 
+    )
   {
     (
       Error err,
