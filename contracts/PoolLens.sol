@@ -535,7 +535,7 @@ contract PoolLens is Initializable {
   function getWhitelistedPoolsByAccount(address account)
     public
     view
-    returns (uint256[] memory, PoolDirectory.Pool[] memory) 
+    returns (uint256[] memory, PoolDirectory.Pool[] memory)
   {
     (, PoolDirectory.Pool[] memory pools) = directory.getActivePools();
     uint256 arrayLength = 0;

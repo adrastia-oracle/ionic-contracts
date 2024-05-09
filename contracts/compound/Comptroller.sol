@@ -728,7 +728,7 @@ contract Comptroller is ComptrollerBase, ComptrollerInterface, ComptrollerErrorR
   function getAccountLiquidity(address account)
     public
     view
-    override 
+    override
     returns (
       uint256,
       uint256,
@@ -769,7 +769,7 @@ contract Comptroller is ComptrollerBase, ComptrollerInterface, ComptrollerErrorR
       uint256,
       uint256,
       uint256
-      ) 
+    ) 
   {
     (
       Error err,
