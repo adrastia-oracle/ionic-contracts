@@ -546,22 +546,7 @@ contract PoolLens is Initializable {
     return (indexes, accountPools, data, errored);
   }
 
-  function getHealthFactor(address user, IonicComptroller pool) external view returns (uint256) {
-    (uint256 err, uint256 collateralValue, uint256 liquidity, uint256 shortfall) = pool.getAccountLiquidity(user);
-
-    if (err != 0) revert ComptrollerError(err);
-
-    if (shortfall > 0) {
-      // HF < 1.0
-      return (collateralValue * 1e18) / (collateralValue + shortfall);
-    } else {
-      // HF >= 1.0
-      if (collateralValue <= liquidity) return type(uint256).max;
-      else return (collateralValue * 1e18) / (collateralValue - liquidity);
-    }
-  }
-
-  function getHealthFactorHypothetical(
+  function getHealthFactor(
     IonicComptroller pool,
     address account,
     address cTokenModify,
