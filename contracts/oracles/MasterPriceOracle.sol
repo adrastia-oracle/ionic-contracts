@@ -160,8 +160,18 @@ contract MasterPriceOracle is Initializable, BasePriceOracle {
 
     // Get underlying price from assigned oracle
     BasePriceOracle oracle = oracles[underlying];
-    if (address(oracle) != address(0)) return oracle.getUnderlyingPrice(cToken);
-    if (address(defaultOracle) != address(0)) return defaultOracle.getUnderlyingPrice(cToken);
+    if (address(oracle) != address(0)) {
+      try oracle.getUnderlyingPrice(cToken) returns (uint256 underlyingPrice) {
+        return underlyingPrice;
+      } catch {
+        // If the call to the main oracle fails, fallback to the default oracle
+        if (address(defaultOracle) != address(0)) {
+          return defaultOracle.getUnderlyingPrice(cToken);
+        }
+      }
+    } else if (address(defaultOracle) != address(0)) {
+      return defaultOracle.getUnderlyingPrice(cToken);
+    }
     revert("Price oracle not found for this underlying token address.");
   }
 
@@ -174,8 +184,18 @@ contract MasterPriceOracle is Initializable, BasePriceOracle {
 
     // Get underlying price from assigned oracle
     BasePriceOracle oracle = oracles[underlying];
-    if (address(oracle) != address(0)) return BasePriceOracle(address(oracle)).price(underlying);
-    if (address(defaultOracle) != address(0)) return BasePriceOracle(address(defaultOracle)).price(underlying);
+    if (address(oracle) != address(0)) {
+      try oracle.price(underlying) returns (uint256 underlyingPrice) {
+        return underlyingPrice;
+      } catch {
+        // If the call to the main oracle fails, fallback to the default oracle
+        if (address(defaultOracle) != address(0)) {
+          return defaultOracle.price(underlying);
+        }
+      }
+    } else if (address(defaultOracle) != address(0)) {
+      return defaultOracle.price(underlying);
+    }
     revert("Price oracle not found for this underlying token address.");
   }
 }
