@@ -86,13 +86,16 @@ contract LeveredPositionLensTest is BaseTest {
   }
 
   function testPrintLeveredPositions() public debuggingOnly fork(POLYGON_MAINNET) {
-    address[] memory markets = factory.getWhitelistedCollateralMarkets();
+    address[] memory accounts = factory.getAccountsWithOpenPositions();
 
-    emit log_named_array("markets", markets);
+    emit log_named_array("accounts", accounts);
 
-    for (uint256 j = 0; j < markets.length; j++) {
-      address[] memory borrowable = factory.getBorrowableMarketsByCollateral(ICErc20(markets[j]));
-      emit log_named_array("borrowable", borrowable);
+    for (uint256 j = 0; j < accounts.length; j++) {
+      address[] memory positions;
+      bool[] memory closed;
+      (positions, closed) = factory.getPositionsByAccount(accounts[j]);
+      emit log_named_array("positions", positions);
+      //emit log_named_array("closed", closed);
     }
   }
 }
@@ -999,7 +1002,7 @@ contract ModeWethUSDTLeveredPositionTest is LeveredPositionTest {
   function afterForkSetUp() internal override {
     super.afterForkSetUp();
 
-    uint256 depositAmount = 10e18;
+    uint256 depositAmount = 1e18;
 
     address wethMarket = 0x71ef7EDa2Be775E5A7aa8afD02C45F059833e9d2;
     address USDTMarket = 0x94812F2eEa03A49869f95e1b5868C6f3206ee3D3;
@@ -1016,7 +1019,6 @@ contract ModeWethUSDTLeveredPositionTest is LeveredPositionTest {
 
     vm.prank(comptroller.admin());
     comptroller._setMarketBorrowCaps(cTokens, newBorrowCaps);
-    vm.stopPrank();
 
     _configurePair(wethMarket, USDTMarket);
     _fundMarketAndSelf(ICErc20(wethMarket), wethWhale);

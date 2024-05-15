@@ -93,6 +93,7 @@ contract PoolCapsAndBlacklistsTest is MarketsTest {
       borrower,
       address(ankrBNBMkt),
       0,
+      0,
       0
     );
     assertEq(shortFallBefore, 0, "should have no shortfall before");
@@ -104,6 +105,7 @@ contract PoolCapsAndBlacklistsTest is MarketsTest {
     (, , uint256 liquidityAfterBlacklist, uint256 shortFallAfterBlacklist) = pool.getHypotheticalAccountLiquidity(
       borrower,
       address(ankrBNBMkt),
+      0,
       0,
       0
     );
@@ -120,6 +122,7 @@ contract PoolCapsAndBlacklistsTest is MarketsTest {
     (, , uint256 liquidityAfterWhitelist, uint256 shortFallWhitelist) = pool.getHypotheticalAccountLiquidity(
       borrower,
       address(ankrBNBMkt),
+      0,
       0,
       0
     );
