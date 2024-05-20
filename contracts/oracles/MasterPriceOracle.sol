@@ -126,6 +126,31 @@ contract MasterPriceOracle is Initializable, BasePriceOracle {
   }
 
   /**
+   * @dev Sets `_oracles` for `underlyings`.
+   */
+  function addFallbacks(address[] calldata underlyings, BasePriceOracle[] calldata _oracles) external onlyAdmin {
+    // Input validation
+    require(
+      underlyings.length > 0 && underlyings.length == _oracles.length,
+      "Lengths of both arrays must be equal and greater than 0."
+    );
+
+    // Assign oracles to underlying tokens
+    for (uint256 i = 0; i < underlyings.length; i++) {
+      address underlying = underlyings[i];
+      address oldOracle = address(fallbackOracles[underlying]);
+      if (noAdminOverwrite)
+        require(
+          oldOracle == address(0),
+          "Admin cannot overwrite existing assignments of oracles to underlying tokens."
+        );
+      BasePriceOracle newOracle = _oracles[i];
+      fallbackOracles[underlying] = newOracle;
+      emit NewOracle(underlying, oldOracle, address(newOracle));
+    }
+  }
+
+  /**
    * @dev Changes the default price oracle
    */
   function setDefaultOracle(BasePriceOracle newOracle) external onlyAdmin {
@@ -159,7 +184,26 @@ contract MasterPriceOracle is Initializable, BasePriceOracle {
   function getUnderlyingPrice(ICErc20 cToken) external view override returns (uint256) {
     // Get underlying ERC20 token address
     address underlying = address(ICErc20(address(cToken)).underlying());
-    return price(underlying);
+
+    if (underlying == wtoken) return 1e18;
+
+    BasePriceOracle oracle = oracles[underlying];
+    BasePriceOracle fallbackOracle = fallbackOracles[underlying];
+
+    if (address(oracle) != address(0)) {
+      try oracle.getUnderlyingPrice(cToken) returns (uint256 underlyingPrice) {
+        if (underlyingPrice == 0) {
+          if (address(fallbackOracle) != address(0)) return fallbackOracle.getUnderlyingPrice(cToken);
+        } else {
+          return underlyingPrice;
+        }
+      } catch {
+        if (address(fallbackOracle) != address(0)) return fallbackOracle.getUnderlyingPrice(cToken);
+      }
+    } else {
+      if (address(fallbackOracle) != address(0)) return fallbackOracle.getUnderlyingPrice(cToken);
+    }
+    revert("Price oracle not found for this underlying token address.");
   }
 
   /**
