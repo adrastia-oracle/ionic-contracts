@@ -7,11 +7,13 @@ import { BasePriceOracle } from "../../../oracles/BasePriceOracle.sol";
 import { ICErc20 } from "../../../compound/CTokenInterfaces.sol";
 import { SimplePriceOracle } from "../../../oracles/default/SimplePriceOracle.sol";
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import { MockRevertPriceOracle } from "../../../oracles/1337/MockRevertPriceOracle.sol";
 
 contract MasterPriceOracleTest is BaseTest {
   MasterPriceOracle mpo;
   SimplePriceOracle mainOracle;
   SimplePriceOracle fallbackOracle;
+  MockRevertPriceOracle revertingOracle;
   ICErc20 mockCToken;
   address someAdminAccount = address(94949);
   address ezETH = 0x2416092f143378750bb29b79eD961ab195CcEea5;
@@ -64,6 +66,8 @@ contract MasterPriceOracleTest is BaseTest {
     mpo.add(tokens, oraclesToAdd);
     mpo.addFallbacks(tokens, fallbackOraclesToAdd);
     vm.stopPrank();
+
+    revertingOracle = new MockRevertPriceOracle();
   }
 
   function testGetUnderlyingPrice() public fork(MODE_MAINNET) {
@@ -94,22 +98,57 @@ contract MasterPriceOracleTest is BaseTest {
   }
 
   function testGetUnderlyingPriceOracleReverts() public fork(MODE_MAINNET) {
-    revert("TODO");
+    address[] memory tokens = new address[](1);
+    tokens[0] = ezETH;
+
+    BasePriceOracle[] memory oraclesToAdd = new BasePriceOracle[](1);
+    oraclesToAdd[0] = BasePriceOracle(revertingOracle);
+
+    vm.prank(someAdminAccount);
+    mpo.add(tokens, oraclesToAdd);
+
+    uint256 price = mpo.getUnderlyingPrice(ICErc20(ionezETH));
+    assertEq(price, 2000, "Price should match the mock price");
   }
 
   function testPrice() public fork(MODE_MAINNET) {
-    revert("TODO");
+    vm.prank(someAdminAccount);
+    uint256 price = mpo.price(ezETH);
+    assertEq(price, 2000, "Price should match the mock price");
   }
 
   function testPriceZero() public fork(MODE_MAINNET) {
-    revert("TODO");
+    vm.prank(someAdminAccount);
+    mainOracle.setDirectPrice(ezETH, 0);
+    uint256 price = mpo.price(ezETH);
+    assertEq(price, 2000, "Price should match the mock price");
   }
 
   function testPriceZeroAddressOracle() public fork(MODE_MAINNET) {
-    revert("TODO");
+    address[] memory tokens = new address[](1);
+    tokens[0] = ezETH;
+
+    BasePriceOracle[] memory oraclesToAdd = new BasePriceOracle[](1);
+    oraclesToAdd[0] = BasePriceOracle(0x0000000000000000000000000000000000000000);
+
+    vm.prank(someAdminAccount);
+    mpo.add(tokens, oraclesToAdd);
+
+    uint256 price = mpo.price(ezETH);
+    assertEq(price, 2000, "Price should match the mock price");
   }
 
   function testPriceOracleReverts() public fork(MODE_MAINNET) {
-    revert("TODO");
+    address[] memory tokens = new address[](1);
+    tokens[0] = ezETH;
+
+    BasePriceOracle[] memory oraclesToAdd = new BasePriceOracle[](1);
+    oraclesToAdd[0] = BasePriceOracle(revertingOracle);
+
+    vm.prank(someAdminAccount);
+    mpo.add(tokens, oraclesToAdd);
+
+    uint256 price = mpo.price(ezETH);
+    assertEq(price, 2000, "Price should match the mock price");
   }
 }
