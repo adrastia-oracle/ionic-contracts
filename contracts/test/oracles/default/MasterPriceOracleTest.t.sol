@@ -76,14 +76,14 @@ contract MasterPriceOracleTest is BaseTest {
     assertEq(price, 2000, "Price should match the mock price");
   }
 
-  function testGetUnderlyingPriceZero() public fork(MODE_MAINNET) {
+  function testGetUnderlyingPriceWhenZero() public fork(MODE_MAINNET) {
     vm.prank(someAdminAccount);
     mainOracle.setDirectPrice(ezETH, 0);
     uint256 price = mpo.getUnderlyingPrice(ICErc20(ionezETH));
     assertEq(price, 2000, "Price should match the mock price");
   }
 
-  function testGetUnderlyingPriceZeroAddressOracle() public fork(MODE_MAINNET) {
+  function testGetUnderlyingPriceWhenZeroAddressOracle() public fork(MODE_MAINNET) {
     address[] memory tokens = new address[](1);
     tokens[0] = ezETH;
 
@@ -97,7 +97,7 @@ contract MasterPriceOracleTest is BaseTest {
     assertEq(price, 2000, "Price should match the mock price");
   }
 
-  function testGetUnderlyingPriceOracleReverts() public fork(MODE_MAINNET) {
+  function testGetUnderlyingPriceWhenOracleReverts() public fork(MODE_MAINNET) {
     address[] memory tokens = new address[](1);
     tokens[0] = ezETH;
 
@@ -117,14 +117,14 @@ contract MasterPriceOracleTest is BaseTest {
     assertEq(price, 2000, "Price should match the mock price");
   }
 
-  function testPriceZero() public fork(MODE_MAINNET) {
+  function testPriceWhenZero() public fork(MODE_MAINNET) {
     vm.prank(someAdminAccount);
     mainOracle.setDirectPrice(ezETH, 0);
     uint256 price = mpo.price(ezETH);
     assertEq(price, 2000, "Price should match the mock price");
   }
 
-  function testPriceZeroAddressOracle() public fork(MODE_MAINNET) {
+  function testPriceWhenZeroAddressOracle() public fork(MODE_MAINNET) {
     address[] memory tokens = new address[](1);
     tokens[0] = ezETH;
 
@@ -138,7 +138,7 @@ contract MasterPriceOracleTest is BaseTest {
     assertEq(price, 2000, "Price should match the mock price");
   }
 
-  function testPriceOracleReverts() public fork(MODE_MAINNET) {
+  function testPriceWhenOracleReverts() public fork(MODE_MAINNET) {
     address[] memory tokens = new address[](1);
     tokens[0] = ezETH;
 
