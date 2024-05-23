@@ -119,7 +119,8 @@ contract IonicLiquidator is OwnableUpgradeable, ILiquidator, IUniswapV2Callee, I
     uint256 repayAmount,
     ICErc20 cErc20,
     ICErc20 cTokenCollateral,
-    uint256 minOutputAmount
+    uint256 minOutputAmount,
+    bool redeemCollateral
   ) external onlyPERPermissioned(borrower) returns (uint256) {
     // Transfer tokens in, approve to cErc20, and liquidate borrow
     require(repayAmount > 0, "Repay amount (transaction value) must be greater than 0.");
@@ -127,8 +128,18 @@ contract IonicLiquidator is OwnableUpgradeable, ILiquidator, IUniswapV2Callee, I
     underlying.safeTransferFrom(msg.sender, address(this), repayAmount);
     justApprove(underlying, address(cErc20), repayAmount);
     require(cErc20.liquidateBorrow(borrower, repayAmount, address(cTokenCollateral)) == 0, "Liquidation failed.");
-    // Transfer seized amount to sender
-    return transferSeizedFunds(address(cTokenCollateral), minOutputAmount);
+
+    if (redeemCollateral) {
+      // Redeem seized cTokens for underlying asset
+      uint256 seizedCTokenAmount = cTokenCollateral.balanceOf(address(this));
+      require(seizedCTokenAmount > 0, "No cTokens seized.");
+      uint256 redeemResult = cTokenCollateral.redeem(seizedCTokenAmount);
+      require(redeemResult == 0, "Error calling redeeming seized cToken: error code not equal to 0");
+
+      return transferSeizedFunds(address(cTokenCollateral.underlying()), minOutputAmount);
+    } else {
+      return transferSeizedFunds(address(cTokenCollateral), minOutputAmount);
+    }
   }
 
   /**

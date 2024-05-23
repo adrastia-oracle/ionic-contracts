@@ -35,7 +35,8 @@ interface ILiquidator {
     uint256 repayAmount,
     ICErc20 cErc20,
     ICErc20 cTokenCollateral,
-    uint256 minOutputAmount
+    uint256 minOutputAmount,
+    bool redeemCollateral
   ) external returns (uint256);
 
   function safeLiquidateToTokensWithFlashLoan(LiquidateToTokensWithFlashSwapVars calldata vars)
