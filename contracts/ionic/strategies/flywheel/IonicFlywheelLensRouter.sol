@@ -197,8 +197,8 @@ contract IonicFlywheelLensRouter {
     IonicComptroller comptroller = market.comptroller();
     BasePriceOracle oracle = comptroller.oracle();
     uint256 assetPrice = oracle.getUnderlyingPrice(market);
-    uint256 collateralValue = (supplied * assetPrice) / 1e18;
-    uint256 borrowsValue = (borrows * assetPrice) / 1e18;
+    uint256 collateralValue = supplied * assetPrice;
+    uint256 borrowsValue = borrows * assetPrice;
 
     uint256 yieldValuePerBlock = (collateralValue * supplyRatePerBlock) / 1e18;
     uint256 interestOwedValuePerBlock = (borrowsValue * borrowRatePerBlock) / 1e18;
