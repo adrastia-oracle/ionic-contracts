@@ -19,6 +19,10 @@ import { PoolLens } from "../PoolLens.sol";
 import { PoolLensSecondary } from "../PoolLensSecondary.sol";
 import { JumpRateModel } from "../compound/JumpRateModel.sol";
 import { LeveredPositionsLens } from "../ionic/levered/LeveredPositionsLens.sol";
+import { IonicFlywheelLensRouter, IonicComptroller, ICErc20, ERC20, IPriceOracle } from "../ionic/strategies/flywheel/IonicFlywheelLensRouter.sol";
+import { PoolDirectory } from "../PoolDirectory.sol";
+
+import "forge-std/console.sol";
 
 contract DevTesting is BaseTest {
   IonicComptroller pool = IonicComptroller(0xFB3323E24743Caf4ADD0fDCCFB268565c0685556);
@@ -103,6 +107,17 @@ contract DevTesting is BaseTest {
     uint256 hf = newImpl.getHealthFactor(rahul, pool);
 
     emit log_named_uint("hf", hf);
+  }
+
+  function testNetAprMode() public debuggingOnly forkAtBlock(MODE_MAINNET, 8479829) {
+    address user = 0x30D5047e839f079bDE1Ab16b34668f57391DacB3;
+    int256 blocks = 30 * 24 * 365 * 60;
+    IonicFlywheelLensRouter lensRouter = new IonicFlywheelLensRouter(
+      PoolDirectory(0x39C353Cf9041CcF467A04d0e78B63d961E81458a)
+    );
+    int256 apr = lensRouter.getUserNetApr(user, blocks);
+
+    emit log_named_int("apr", apr);
   }
 
   function testModeUsdcBorrowCaps() public debuggingOnly fork(MODE_MAINNET) {
