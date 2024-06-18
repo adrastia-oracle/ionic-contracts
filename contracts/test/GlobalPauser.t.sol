@@ -6,31 +6,37 @@ import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/trans
 
 import "./config/BaseTest.t.sol";
 import { IonicComptroller } from "../compound/ComptrollerInterface.sol";
+import { IComptroller } from "../external/compound/IComptroller.sol";
 import { GlobalPauser } from "../GlobalPauser.sol";
 import { PoolDirectory } from "../PoolDirectory.sol";
 import { ICErc20 } from "../compound/CTokenInterfaces.sol";
 
 import "forge-std/console.sol";
 
-contract DevTesting is BaseTest {
-  address poolDirectory = 0x39C353Cf9041CcF467A04d0e78B63d961E81458a;
-
-  address pauseGuardian = 0x1155b614971f16758C92c4890eD338C9e3ede6b7;
-  address multisig = 0x8Fba84867Ba458E7c6E2c024D2DE3d0b5C3ea1C2;
-  GlobalPauser pauser;
+contract GlobalPauserTest is BaseTest {
+  address public poolDirectory = 0x39C353Cf9041CcF467A04d0e78B63d961E81458a;
+  address public pauseGuardian = 0xD9677b0eeafdCe6BF322d9774Bb65B1f42cF0404;
+  address public multisig = 0x8Fba84867Ba458E7c6E2c024D2DE3d0b5C3ea1C2;
+  GlobalPauser public pauser; // = GlobalPauser(0xe646D8Be18e545244C5E79F121202f75FA3880c8);
 
   function afterForkSetUp() internal override {
     super.afterForkSetUp();
     pauser = new GlobalPauser(poolDirectory);
+    pauser.setPauseGuardian(pauseGuardian, true);
+    (, PoolDirectory.Pool[] memory pools) = PoolDirectory(poolDirectory).getActivePools();
+    for (uint256 i = 0; i < pools.length; i++) {
+      vm.prank(IonicComptroller(pools[i].comptroller).admin());
+      IonicComptroller(pools[i].comptroller)._setPauseGuardian(address(pauser));
+    }
   }
 
-  function testPauseNotGuardian(address sender) public debuggingOnly forkAtBlock(MODE_MAINNET, 9110133) {
+  function testPauseNotGuardian(address sender) public debuggingOnly forkAtBlock(MODE_MAINNET, 9269895) {
     vm.assume(sender != pauseGuardian);
     vm.expectRevert(bytes("!guardian"));
-    pauser.pauseAll(true);
+    pauser.pauseAll();
   }
 
-  function testPauseAll() public debuggingOnly forkAtBlock(MODE_MAINNET, 9110133) {
+  function testPauseAll() public debuggingOnly forkAtBlock(MODE_MAINNET, 9269895) {
     (, PoolDirectory.Pool[] memory pools) = PoolDirectory(poolDirectory).getActivePools();
     for (uint256 i = 0; i < pools.length; i++) {
       ICErc20[] memory markets = IonicComptroller(pools[i].comptroller).getAllMarkets();
@@ -42,7 +48,7 @@ contract DevTesting is BaseTest {
       }
     }
     vm.prank(pauseGuardian);
-    pauser.pauseAll(true);
+    pauser.pauseAll();
     for (uint256 i = 0; i < pools.length; i++) {
       ICErc20[] memory markets = IonicComptroller(pools[i].comptroller).getAllMarkets();
       for (uint256 j = 0; j < markets.length; j++) {
@@ -50,17 +56,6 @@ contract DevTesting is BaseTest {
         assertEq(isPaused, true);
         isPaused = IonicComptroller(pools[i].comptroller).mintGuardianPaused(address(markets[j]));
         assertEq(isPaused, true);
-      }
-    }
-    vm.prank(pauseGuardian);
-    pauser.pauseAll(false);
-    for (uint256 i = 0; i < pools.length; i++) {
-      ICErc20[] memory markets = IonicComptroller(pools[i].comptroller).getAllMarkets();
-      for (uint256 j = 0; j < markets.length; j++) {
-        bool isPaused = IonicComptroller(pools[i].comptroller).borrowGuardianPaused(address(markets[j]));
-        assertEq(isPaused, false);
-        isPaused = IonicComptroller(pools[i].comptroller).mintGuardianPaused(address(markets[j]));
-        assertEq(isPaused, false);
       }
     }
   }
