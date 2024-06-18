@@ -21,6 +21,7 @@ abstract contract BaseTest is Test {
   uint128 constant LINEA_MAINNET = 59144;
   uint128 constant ZKEVM_MAINNET = 1101;
   uint128 constant MODE_MAINNET = 34443;
+  uint128 constant BASE_MAINNET = 8453;
 
   // taken from ERC1967Upgrade
   bytes32 internal constant _ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
