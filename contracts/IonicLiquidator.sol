@@ -22,6 +22,8 @@ import { ICErc20 } from "./compound/CTokenInterfaces.sol";
 import "@pythnetwork/express-relay-sdk-solidity/IExpressRelay.sol";
 import "@pythnetwork/express-relay-sdk-solidity/IExpressRelayFeeReceiver.sol";
 
+import "./PoolLens.sol";
+
 /**
  * @title IonicLiquidator
  * @author David Lucid <david@rari.capital> (https://github.com/davidlucid)
@@ -70,10 +72,21 @@ contract IonicLiquidator is OwnableUpgradeable, ILiquidator, IUniswapV2Callee, I
   /**
    * @dev Addres of Pyth Express Relay for preventing value leakage in liquidations.
    */
-  IExpressRelay private expressRelay;
+  IExpressRelay public expressRelay;
+  /**
+   * @dev Pool Lens.
+   */
+  PoolLens public lens;
+  /**
+   * @dev Health Factor below which PER permissioning is bypassed.
+   */
+  uint256 public healthFactorThreshold;
 
-  modifier onlyPERPermissioned(address borrower) {
-    require(expressRelay.isPermissioned(address(this), abi.encode(borrower)), "invalid liquidation");
+  modifier onlyPERPermissioned(address borrower, ICErc20 cToken) {
+    uint256 currentHealthFactor = lens.getHealthFactor(borrower, cToken.comptroller());
+    if (currentHealthFactor > healthFactorThreshold) {
+      require(expressRelay.isPermissioned(address(this), abi.encode(borrower)), "invalid liquidation");
+    }
     _;
   }
 
@@ -121,7 +134,7 @@ contract IonicLiquidator is OwnableUpgradeable, ILiquidator, IUniswapV2Callee, I
     ICErc20 cTokenCollateral,
     uint256 minOutputAmount,
     bool redeemCollateral
-  ) external onlyPERPermissioned(borrower) returns (uint256) {
+  ) external onlyPERPermissioned(borrower, cTokenCollateral) returns (uint256) {
     // Transfer tokens in, approve to cErc20, and liquidate borrow
     require(repayAmount > 0, "Repay amount (transaction value) must be greater than 0.");
     IERC20Upgradeable underlying = IERC20Upgradeable(cErc20.underlying());
@@ -162,7 +175,7 @@ contract IonicLiquidator is OwnableUpgradeable, ILiquidator, IUniswapV2Callee, I
    */
   function safeLiquidateToTokensWithFlashLoan(
     LiquidateToTokensWithFlashSwapVars calldata vars
-  ) external onlyPERPermissioned(vars.borrower) returns (uint256) {
+  ) external onlyPERPermissioned(vars.borrower, vars.cTokenCollateral) returns (uint256) {
     // Input validation
     require(vars.repayAmount > 0, "Repay amount must be greater than 0.");
 
@@ -432,6 +445,15 @@ contract IonicLiquidator is OwnableUpgradeable, ILiquidator, IUniswapV2Callee, I
 
   function setExpressRelay(address _expressRelay) external onlyOwner {
     expressRelay = IExpressRelay(_expressRelay);
+  }
+
+  function setPoolLens(PoolLens _poolLens) external onlyOwner {
+    lens = _poolLens;
+  }
+
+  function setHealthFactorThreshold(uint256 _healthFactorThreshold) external onlyOwner {
+    require(_healthFactorThreshold <= 1e18, "Invalid Health Factor Threshold");
+    healthFactorThreshold = _healthFactorThreshold;
   }
 
   /**

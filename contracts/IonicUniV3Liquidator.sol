@@ -16,6 +16,8 @@ import { IUniswapV3Quoter } from "./external/uniswap/quoter/interfaces/IUniswapV
 
 import { ICErc20 } from "./compound/CTokenInterfaces.sol";
 
+import "./PoolLens.sol";
+
 /**
  * @title IonicUniV3Liquidator
  * @author Veliko Minkov <v.minkov@dcvx.io> (https://github.com/vminkov)
@@ -48,6 +50,27 @@ contract IonicUniV3Liquidator is OwnableUpgradeable, ILiquidator, IUniswapV3Flas
   mapping(address => bool) public redemptionStrategiesWhitelist;
   IUniswapV3Quoter public quoter;
 
+  /**
+   * @dev Addres of Pyth Express Relay for preventing value leakage in liquidations.
+   */
+  IExpressRelay public expressRelay;
+  /**
+   * @dev Pool Lens.
+   */
+  PoolLens public lens;
+  /**
+   * @dev Health Factor below which PER permissioning is bypassed.
+   */
+  uint256 public healthFactorThreshold;
+
+  modifier onlyPERPermissioned(address borrower, ICErc20 cToken) {
+    uint256 currentHealthFactor = lens.getHealthFactor(borrower, cToken.comptroller());
+    if (currentHealthFactor > healthFactorThreshold) {
+      require(expressRelay.isPermissioned(address(this), abi.encode(borrower)), "invalid liquidation");
+    }
+    _;
+  }
+
   function initialize(address _wtoken, address _quoter) external initializer {
     __Ownable_init();
     W_NATIVE_ADDRESS = _wtoken;
@@ -69,15 +92,25 @@ contract IonicUniV3Liquidator is OwnableUpgradeable, ILiquidator, IUniswapV3Flas
     ICErc20 cTokenCollateral,
     uint256 minOutputAmount,
     bool redeemCollateral
-  ) external returns (uint256) {
+  ) external onlyPERPermissioned(borrower, cTokenCollateral) returns (uint256) {
     // Transfer tokens in, approve to cErc20, and liquidate borrow
     require(repayAmount > 0, "Repay amount (transaction value) must be greater than 0.");
     IERC20Upgradeable underlying = IERC20Upgradeable(cErc20.underlying());
     underlying.safeTransferFrom(msg.sender, address(this), repayAmount);
     underlying.approve(address(cErc20), repayAmount);
     require(cErc20.liquidateBorrow(borrower, repayAmount, address(cTokenCollateral)) == 0, "Liquidation failed.");
-    // Transfer seized amount to sender
-    return transferSeizedFunds(address(cTokenCollateral), minOutputAmount);
+
+    if (redeemCollateral) {
+      // Redeem seized cTokens for underlying asset
+      uint256 seizedCTokenAmount = cTokenCollateral.balanceOf(address(this));
+      require(seizedCTokenAmount > 0, "No cTokens seized.");
+      uint256 redeemResult = cTokenCollateral.redeem(seizedCTokenAmount);
+      require(redeemResult == 0, "Error calling redeeming seized cToken: error code not equal to 0");
+
+      return transferSeizedFunds(address(cTokenCollateral.underlying()), minOutputAmount);
+    } else {
+      return transferSeizedFunds(address(cTokenCollateral), minOutputAmount);
+    }
   }
 
   /**
@@ -94,10 +127,9 @@ contract IonicUniV3Liquidator is OwnableUpgradeable, ILiquidator, IUniswapV3Flas
     return seizedOutputAmount;
   }
 
-  function safeLiquidateToTokensWithFlashLoan(LiquidateToTokensWithFlashSwapVars calldata vars)
-    external
-    returns (uint256)
-  {
+  function safeLiquidateToTokensWithFlashLoan(
+    LiquidateToTokensWithFlashSwapVars calldata vars
+  ) external onlyPERPermissioned(borrower, cTokenCollateral) returns (uint256) {
     // Input validation
     require(vars.repayAmount > 0, "Repay amount must be greater than 0.");
 
@@ -149,27 +181,15 @@ contract IonicUniV3Liquidator is OwnableUpgradeable, ILiquidator, IUniswapV3Flas
    * @dev Callback function for Uniswap flashloans.
    */
 
-  function supV3FlashCallback(
-    uint256 fee0,
-    uint256 fee1,
-    bytes calldata data
-  ) external {
+  function supV3FlashCallback(uint256 fee0, uint256 fee1, bytes calldata data) external {
     uniswapV3FlashCallback(fee0, fee1, data);
   }
 
-  function algebraFlashCallback(
-    uint256 fee0,
-    uint256 fee1,
-    bytes calldata data
-  ) external {
+  function algebraFlashCallback(uint256 fee0, uint256 fee1, bytes calldata data) external {
     uniswapV3FlashCallback(fee0, fee1, data);
   }
 
-  function uniswapV3FlashCallback(
-    uint256 fee0,
-    uint256 fee1,
-    bytes calldata data
-  ) public {
+  function uniswapV3FlashCallback(uint256 fee0, uint256 fee1, bytes calldata data) public {
     // Liquidate unhealthy borrow, exchange seized collateral, return flashloaned funds, and exchange profit
     // Decode params
     LiquidateToTokensWithFlashSwapVars memory vars = abi.decode(data[4:], (LiquidateToTokensWithFlashSwapVars));
@@ -328,10 +348,10 @@ contract IonicUniV3Liquidator is OwnableUpgradeable, ILiquidator, IUniswapV3Flas
    * Each whitelisted redemption strategy has to be checked to not be able to
    * call `selfdestruct` with the `delegatecall` call in `redeemCustomCollateral`
    */
-  function _whitelistRedemptionStrategies(IRedemptionStrategy[] calldata strategies, bool[] calldata whitelisted)
-    external
-    onlyOwner
-  {
+  function _whitelistRedemptionStrategies(
+    IRedemptionStrategy[] calldata strategies,
+    bool[] calldata whitelisted
+  ) external onlyOwner {
     require(
       strategies.length > 0 && strategies.length == whitelisted.length,
       "list of strategies empty or whitelist does not match its length"
@@ -340,6 +360,19 @@ contract IonicUniV3Liquidator is OwnableUpgradeable, ILiquidator, IUniswapV3Flas
     for (uint256 i = 0; i < strategies.length; i++) {
       redemptionStrategiesWhitelist[address(strategies[i])] = whitelisted[i];
     }
+  }
+
+  function setExpressRelay(address _expressRelay) external onlyOwner {
+    expressRelay = IExpressRelay(_expressRelay);
+  }
+
+  function setPoolLens(PoolLens _poolLens) external onlyOwner {
+    lens = _poolLens;
+  }
+
+  function setHealthFactorThreshold(uint256 _healthFactorThreshold) external onlyOwner {
+    require(_healthFactorThreshold <= 1e18, "Invalid Health Factor Threshold");
+    healthFactorThreshold = _healthFactorThreshold;
   }
 
   /**
