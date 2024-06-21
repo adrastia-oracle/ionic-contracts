@@ -17,6 +17,7 @@ import { IUniswapV3Quoter } from "./external/uniswap/quoter/interfaces/IUniswapV
 import { ICErc20 } from "./compound/CTokenInterfaces.sol";
 
 import "./PoolLens.sol";
+import "@pythnetwork/express-relay-sdk-solidity/IExpressRelay.sol";
 
 /**
  * @title IonicUniV3Liquidator
@@ -129,7 +130,7 @@ contract IonicUniV3Liquidator is OwnableUpgradeable, ILiquidator, IUniswapV3Flas
 
   function safeLiquidateToTokensWithFlashLoan(
     LiquidateToTokensWithFlashSwapVars calldata vars
-  ) external onlyPERPermissioned(borrower, cTokenCollateral) returns (uint256) {
+  ) external onlyPERPermissioned(vars.borrower, vars.cTokenCollateral) returns (uint256) {
     // Input validation
     require(vars.repayAmount > 0, "Repay amount must be greater than 0.");
 
