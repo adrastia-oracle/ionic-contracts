@@ -451,8 +451,8 @@ contract IonicLiquidator is OwnableUpgradeable, ILiquidator, IUniswapV2Callee, I
     expressRelay = IExpressRelay(_expressRelay);
   }
 
-  function setPoolLens(PoolLens _poolLens) external onlyOwner {
-    lens = _poolLens;
+  function setPoolLens(address _poolLens) external onlyOwner {
+    lens = PoolLens(_poolLens);
   }
 
   function setHealthFactorThreshold(uint256 _healthFactorThreshold) external onlyOwner {

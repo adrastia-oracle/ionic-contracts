@@ -196,7 +196,7 @@ contract IonicLiquidatorTest is UpgradesBaseTest {
     vm.stopPrank();
 
     vm.startPrank(0x1155b614971f16758C92c4890eD338C9e3ede6b7);
-    liquidatorV3.setPoolLens(lens);
+    liquidatorV3.setPoolLens(address(lens));
     liquidatorV3.setHealthFactorThreshold(1e18);
     vm.stopPrank();
 

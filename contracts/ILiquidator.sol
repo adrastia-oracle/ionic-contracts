@@ -39,12 +39,20 @@ interface ILiquidator {
     bool redeemCollateral
   ) external returns (uint256);
 
-  function safeLiquidateToTokensWithFlashLoan(LiquidateToTokensWithFlashSwapVars calldata vars)
-    external
-    returns (uint256);
+  function safeLiquidateToTokensWithFlashLoan(
+    LiquidateToTokensWithFlashSwapVars calldata vars
+  ) external returns (uint256);
 
   function _whitelistRedemptionStrategy(IRedemptionStrategy strategy, bool whitelisted) external;
 
-  function _whitelistRedemptionStrategies(IRedemptionStrategy[] calldata strategies, bool[] calldata whitelisted)
-    external;
+  function _whitelistRedemptionStrategies(
+    IRedemptionStrategy[] calldata strategies,
+    bool[] calldata whitelisted
+  ) external;
+
+  function setExpressRelay(address _expressRelay) external;
+
+  function setPoolLens(address _poolLens) external;
+
+  function setHealthFactorThreshold(uint256 _healthFactorThreshold) external;
 }
