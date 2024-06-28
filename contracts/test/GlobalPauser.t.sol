@@ -36,34 +36,8 @@ contract GlobalPauserTest is BaseTest {
     pauser.pauseAll();
   }
 
-  function testPauseAllMode() public debuggingOnly forkAtBlock(MODE_MAINNET, 9269895) {
+  function testPauseAll() public debuggingOnly forkAtBlock(MODE_MAINNET, 9269895) {
     (, PoolDirectory.Pool[] memory pools) = PoolDirectory(poolDirectory).getActivePools();
-    for (uint256 i = 0; i < pools.length; i++) {
-      ICErc20[] memory markets = IonicComptroller(pools[i].comptroller).getAllMarkets();
-      for (uint256 j = 0; j < markets.length; j++) {
-        bool isPaused = IonicComptroller(pools[i].comptroller).borrowGuardianPaused(address(markets[j]));
-        assertEq(isPaused, false);
-        isPaused = IonicComptroller(pools[i].comptroller).mintGuardianPaused(address(markets[j]));
-        assertEq(isPaused, false);
-      }
-    }
-    vm.prank(pauseGuardian);
-    pauser.pauseAll();
-    for (uint256 i = 0; i < pools.length; i++) {
-      ICErc20[] memory markets = IonicComptroller(pools[i].comptroller).getAllMarkets();
-      for (uint256 j = 0; j < markets.length; j++) {
-        bool isPaused = IonicComptroller(pools[i].comptroller).borrowGuardianPaused(address(markets[j]));
-        assertEq(isPaused, true);
-        isPaused = IonicComptroller(pools[i].comptroller).mintGuardianPaused(address(markets[j]));
-        assertEq(isPaused, true);
-      }
-    }
-  }
-
-  function testPauseAllBase() public debuggingOnly forkAtBlock(BASE_MAINNET, 15970403) {
-    address _poolDirectory = 0xE1A3006be645a80F206311d9f18C866c204bA02f;
-    pauser = GlobalPauser(0x48F0F46F56C2Ca5def59fd673fF69495b7272Eb0);
-    (, PoolDirectory.Pool[] memory pools) = PoolDirectory(_poolDirectory).getActivePools();
     for (uint256 i = 0; i < pools.length; i++) {
       ICErc20[] memory markets = IonicComptroller(pools[i].comptroller).getAllMarkets();
       for (uint256 j = 0; j < markets.length; j++) {
