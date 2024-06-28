@@ -34,6 +34,8 @@ contract IonicLiquidator is OwnableUpgradeable, ILiquidator, IUniswapV2Callee, I
   using AddressUpgradeable for address payable;
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
+  event VaultReceivedETH(address sender, uint256 amount, bytes permissionKey);
+
   /**
    * @dev W_NATIVE contract address.
    */
@@ -227,7 +229,9 @@ contract IonicLiquidator is OwnableUpgradeable, ILiquidator, IUniswapV2Callee, I
    * @notice receiveAuctionProceedings function - receives native token from the express relay
    * You can use permission key to distribute the received funds to users who got liquidated, LPs, etc...
    */
-  function receiveAuctionProceedings(bytes calldata permissionKey) external payable {}
+  function receiveAuctionProceedings(bytes calldata permissionKey) external payable {
+    emit VaultReceivedETH(msg.sender, msg.value, permissionKey);
+  }
 
   function withdrawAll() external onlyOwner {
     uint256 balance = address(this).balance;
