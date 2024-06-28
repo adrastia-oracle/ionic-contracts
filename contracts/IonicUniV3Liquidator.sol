@@ -18,13 +18,14 @@ import { ICErc20 } from "./compound/CTokenInterfaces.sol";
 
 import "./PoolLens.sol";
 import "@pythnetwork/express-relay-sdk-solidity/IExpressRelay.sol";
+import "@pythnetwork/express-relay-sdk-solidity/IExpressRelayFeeReceiver.sol";
 
 /**
  * @title IonicUniV3Liquidator
  * @author Veliko Minkov <v.minkov@dcvx.io> (https://github.com/vminkov)
  * @notice IonicUniV3Liquidator liquidates unhealthy borrowers with flashloan support.
  */
-contract IonicUniV3Liquidator is OwnableUpgradeable, ILiquidator, IUniswapV3FlashCallback {
+contract IonicUniV3Liquidator is OwnableUpgradeable, ILiquidator, IUniswapV3FlashCallback, IExpressRelayFeeReceiver {
   using AddressUpgradeable for address payable;
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -176,6 +177,21 @@ contract IonicUniV3Liquidator is OwnableUpgradeable, ILiquidator, IUniswapV3Flas
    */
   receive() external payable {
     require(payable(msg.sender).isContract(), "Sender is not a contract.");
+  }
+
+  /**
+   * @notice receiveAuctionProceedings function - receives native token from the express relay
+   * You can use permission key to distribute the received funds to users who got liquidated, LPs, etc...
+   */
+  function receiveAuctionProceedings(bytes calldata permissionKey) external payable {}
+
+  function withdrawAll() external onlyOwner {
+    uint256 balance = address(this).balance;
+    require(balance > 0, "No Ether left to withdraw");
+
+    // Transfer all Ether to the owner
+    (bool sent, ) = msg.sender.call{ value: balance }("");
+    require(sent, "Failed to send Ether");
   }
 
   /**
