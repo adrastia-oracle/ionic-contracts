@@ -157,6 +157,31 @@ contract IonicLiquidatorTest is UpgradesBaseTest {
     liquidator.safeLiquidateToTokensWithFlashLoan(vars);
   }
 
+  function testWithdrawalLiquidator() public debuggingOnly fork(MODE_MAINNET) {
+    TransparentUpgradeableProxy proxyV3 = TransparentUpgradeableProxy(payable(ap.getAddress("IonicUniV3Liquidator")));
+    IonicUniV3Liquidator implV3 = new IonicUniV3Liquidator();
+    IonicUniV3Liquidator liquidatorV3 = IonicUniV3Liquidator(payable(ap.getAddress("IonicUniV3Liquidator")));
+    ProxyAdmin proxyAdmin = ProxyAdmin(ap.getAddress("DefaultProxyAdmin"));
+
+    vm.startPrank(proxyAdmin.owner());
+    proxyAdmin.upgrade(proxyV3, address(implV3));
+    vm.stopPrank();
+
+    vm.prank(0x4200000000000000000000000000000000000016);
+    (bool success, ) = address(liquidatorV3).call{ value: 1 ether }("");
+    require(success, "transfer of funds failed");
+
+    uint256 beforeBalance = liquidatorV3.owner().balance;
+
+    vm.prank(liquidatorV3.owner());
+    liquidatorV3.withdrawAll();
+
+    emit log_named_uint("balance of liquidator", liquidatorV3.owner().balance);
+
+    assertEq(liquidatorV3.owner().balance, beforeBalance + 1 ether);
+    assertEq(address(liquidatorV3).balance, 0);
+  }
+
   function testLiquidateAfterUpgradeLiquidator() public debuggingOnly forkAtBlock(MODE_MAINNET, 9382006) {
     // upgrade IonicLiquidator
     TransparentUpgradeableProxy proxyV3 = TransparentUpgradeableProxy(payable(ap.getAddress("IonicUniV3Liquidator")));
