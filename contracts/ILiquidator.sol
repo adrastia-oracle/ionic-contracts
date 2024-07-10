@@ -46,4 +46,10 @@ interface ILiquidator {
 
   function _whitelistRedemptionStrategies(IRedemptionStrategy[] calldata strategies, bool[] calldata whitelisted)
     external;
+
+  function setExpressRelay(address _expressRelay) external;
+
+  function setPoolLens(address _poolLens) external;
+
+  function setHealthFactorThreshold(uint256 _healthFactorThreshold) external;
 }
