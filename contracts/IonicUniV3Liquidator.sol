@@ -102,17 +102,13 @@ contract IonicUniV3Liquidator is OwnableUpgradeable, ILiquidator, IUniswapV3Flas
     underlying.approve(address(cErc20), repayAmount);
     require(cErc20.liquidateBorrow(borrower, repayAmount, address(cTokenCollateral)) == 0, "Liquidation failed.");
 
-    if (redeemCollateral) {
-      // Redeem seized cTokens for underlying asset
-      uint256 seizedCTokenAmount = cTokenCollateral.balanceOf(address(this));
-      require(seizedCTokenAmount > 0, "No cTokens seized.");
-      uint256 redeemResult = cTokenCollateral.redeem(seizedCTokenAmount);
-      require(redeemResult == 0, "Error calling redeeming seized cToken: error code not equal to 0");
+    // Redeem seized cTokens for underlying asset
+    uint256 seizedCTokenAmount = cTokenCollateral.balanceOf(address(this));
+    require(seizedCTokenAmount > 0, "No cTokens seized.");
+    uint256 redeemResult = cTokenCollateral.redeem(seizedCTokenAmount);
+    require(redeemResult == 0, "Error calling redeeming seized cToken: error code not equal to 0");
 
-      return transferSeizedFunds(address(cTokenCollateral.underlying()), minOutputAmount);
-    } else {
-      return transferSeizedFunds(address(cTokenCollateral), minOutputAmount);
-    }
+    return transferSeizedFunds(address(cTokenCollateral.underlying()), minOutputAmount);
   }
 
   /**
