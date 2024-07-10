@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity 0.8.10;
+pragma solidity ^0.8.10;
 
 import { ICErc20 } from "../../../compound/CTokenInterfaces.sol";
 
@@ -16,7 +16,7 @@ import { ICErc20 } from "../../../compound/CTokenInterfaces.sol";
          SECURITY NOTE: similar to how Core needs to be notified any time the strategy user composition changes, the booster would need to be notified of any conditions which change the boosted balances atomically.
          This prevents gaming of the reward calculation function by using manipulated balances when accruing.
 */
-interface IFlywheelBorrowBooster {
+interface IIonicFlywheelBorrowBooster {
     /**
       @notice calculate the boosted supply of a strategy.
       @param strategy the strategy to calculate boosted supply of

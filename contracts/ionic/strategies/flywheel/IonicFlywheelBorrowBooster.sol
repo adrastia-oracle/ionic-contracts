@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity 0.8.10;
+pragma solidity ^0.8.10;
 
 import { ICErc20 } from "../../../compound/CTokenInterfaces.sol";
-import "./IFlywheelBorrowBooster.sol";
+import "./IIonicFlywheelBorrowBooster.sol";
 
-contract FlywheelBorrowBooster is IFlywheelBorrowBooster {
+contract IonicFlywheelBorrowBooster is IIonicFlywheelBorrowBooster {
   string public constant BOOSTER_TYPE = "FlywheelBorrowBooster";
 
   /**
