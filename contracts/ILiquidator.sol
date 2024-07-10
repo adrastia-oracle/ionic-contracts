@@ -38,16 +38,14 @@ interface ILiquidator {
     uint256 minOutputAmount
   ) external returns (uint256);
 
-  function safeLiquidateToTokensWithFlashLoan(
-    LiquidateToTokensWithFlashSwapVars calldata vars
-  ) external returns (uint256);
+  function safeLiquidateToTokensWithFlashLoan(LiquidateToTokensWithFlashSwapVars calldata vars)
+    external
+    returns (uint256);
 
   function _whitelistRedemptionStrategy(IRedemptionStrategy strategy, bool whitelisted) external;
 
-  function _whitelistRedemptionStrategies(
-    IRedemptionStrategy[] calldata strategies,
-    bool[] calldata whitelisted
-  ) external;
+  function _whitelistRedemptionStrategies(IRedemptionStrategy[] calldata strategies, bool[] calldata whitelisted)
+    external;
 
   function setExpressRelay(address _expressRelay) external;
 

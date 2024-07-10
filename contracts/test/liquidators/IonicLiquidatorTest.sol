@@ -29,7 +29,11 @@ import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin
 import { PoolLens } from "../../PoolLens.sol";
 
 contract MockRedemptionStrategy is IRedemptionStrategy {
-  function redeem(IERC20Upgradeable, uint256, bytes memory) external returns (IERC20Upgradeable, uint256) {
+  function redeem(
+    IERC20Upgradeable,
+    uint256,
+    bytes memory
+  ) external returns (IERC20Upgradeable, uint256) {
     return (IERC20Upgradeable(address(0)), 1);
   }
 
@@ -151,8 +155,8 @@ contract IonicLiquidatorTest is UpgradesBaseTest {
 
     vars.redemptionStrategies[0] = IFundsConversionStrategy(0x5cA3fd2c285C4138185Ef1BdA7573D415020F3C8);
     vars.strategyData[
-      0
-    ] = hex"0000000000000000000000004200000000000000000000000000000000000006000000000000000000000000ac48fcf1049668b285f3dc72483df5ae2162f7e8";
+        0
+      ] = hex"0000000000000000000000004200000000000000000000000000000000000006000000000000000000000000ac48fcf1049668b285f3dc72483df5ae2162f7e8";
 
     liquidator.safeLiquidateToTokensWithFlashLoan(vars);
   }
