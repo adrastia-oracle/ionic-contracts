@@ -93,8 +93,7 @@ contract IonicUniV3Liquidator is OwnableUpgradeable, ILiquidator, IUniswapV3Flas
     uint256 repayAmount,
     ICErc20 cErc20,
     ICErc20 cTokenCollateral,
-    uint256 minOutputAmount,
-    bool redeemCollateral
+    uint256 minOutputAmount
   ) external onlyPERPermissioned(borrower, cTokenCollateral) returns (uint256) {
     // Transfer tokens in, approve to cErc20, and liquidate borrow
     require(repayAmount > 0, "Repay amount (transaction value) must be greater than 0.");
