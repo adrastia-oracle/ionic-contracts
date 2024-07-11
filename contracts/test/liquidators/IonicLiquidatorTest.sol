@@ -5,6 +5,7 @@ import { IERC20Upgradeable } from "openzeppelin-contracts-upgradeable/contracts/
 import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
 import { IonicLiquidator, ILiquidator } from "../../IonicLiquidator.sol";
+import { IonicUniV3Liquidator } from "../../IonicUniV3Liquidator.sol";
 import { ICurvePool } from "../../external/curve/ICurvePool.sol";
 import { CurveSwapLiquidatorFunder } from "../../liquidators/CurveSwapLiquidatorFunder.sol";
 import { UniswapV3LiquidatorFunder } from "../../liquidators/UniswapV3LiquidatorFunder.sol";
@@ -23,6 +24,9 @@ import { BasePriceOracle } from "../../oracles/BasePriceOracle.sol";
 
 import { BaseTest } from "../config/BaseTest.t.sol";
 import { UpgradesBaseTest } from "../UpgradesBaseTest.sol";
+import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import { PoolLens } from "../../PoolLens.sol";
 
 contract MockRedemptionStrategy is IRedemptionStrategy {
   function redeem(
@@ -155,6 +159,75 @@ contract IonicLiquidatorTest is UpgradesBaseTest {
       ] = hex"0000000000000000000000004200000000000000000000000000000000000006000000000000000000000000ac48fcf1049668b285f3dc72483df5ae2162f7e8";
 
     liquidator.safeLiquidateToTokensWithFlashLoan(vars);
+  }
+
+  function testWithdrawalLiquidator() public debuggingOnly fork(MODE_MAINNET) {
+    TransparentUpgradeableProxy proxyV3 = TransparentUpgradeableProxy(payable(ap.getAddress("IonicUniV3Liquidator")));
+    IonicUniV3Liquidator implV3 = new IonicUniV3Liquidator();
+    IonicUniV3Liquidator liquidatorV3 = IonicUniV3Liquidator(payable(ap.getAddress("IonicUniV3Liquidator")));
+    ProxyAdmin proxyAdmin = ProxyAdmin(ap.getAddress("DefaultProxyAdmin"));
+
+    vm.startPrank(proxyAdmin.owner());
+    proxyAdmin.upgrade(proxyV3, address(implV3));
+    vm.stopPrank();
+
+    vm.prank(0x4200000000000000000000000000000000000016);
+    (bool success, ) = address(liquidatorV3).call{ value: 1 ether }("");
+    require(success, "transfer of funds failed");
+
+    uint256 beforeBalance = liquidatorV3.owner().balance;
+
+    vm.prank(liquidatorV3.owner());
+    liquidatorV3.withdrawAll();
+
+    emit log_named_uint("balance of liquidator", liquidatorV3.owner().balance);
+
+    assertEq(liquidatorV3.owner().balance, beforeBalance + 1 ether);
+    assertEq(address(liquidatorV3).balance, 0);
+  }
+
+  function testLiquidateAfterUpgradeLiquidator() public debuggingOnly forkAtBlock(MODE_MAINNET, 9382006) {
+    // upgrade IonicLiquidator
+    TransparentUpgradeableProxy proxyV3 = TransparentUpgradeableProxy(payable(ap.getAddress("IonicUniV3Liquidator")));
+    IonicUniV3Liquidator implV3 = new IonicUniV3Liquidator();
+    IonicUniV3Liquidator liquidatorV3 = IonicUniV3Liquidator(payable(ap.getAddress("IonicUniV3Liquidator")));
+    PoolLens lens = PoolLens(0x70BB19a56BfAEc65aE861E6275A90163AbDF36a6);
+
+    ProxyAdmin proxyAdmin = ProxyAdmin(ap.getAddress("DefaultProxyAdmin"));
+
+    vm.startPrank(proxyAdmin.owner());
+    proxyAdmin.upgrade(proxyV3, address(implV3));
+    vm.stopPrank();
+
+    vm.startPrank(0x1155b614971f16758C92c4890eD338C9e3ede6b7);
+    liquidatorV3.setPoolLens(address(lens));
+    liquidatorV3.setHealthFactorThreshold(1e18);
+    vm.stopPrank();
+
+    IonicComptroller pool = IonicComptroller(0xFB3323E24743Caf4ADD0fDCCFB268565c0685556);
+    (, , uint256 liquidity, uint256 shortfall) = pool.getAccountLiquidity(0x92eA6902C5023CC632e3Fd84dE7CcA6b98FE853d);
+    emit log_named_uint("liquidity", liquidity);
+    emit log_named_uint("shortfall", shortfall);
+
+    uint256 healthFactor = lens.getHealthFactor(0x92eA6902C5023CC632e3Fd84dE7CcA6b98FE853d, pool);
+    emit log_named_uint("hf before", healthFactor);
+
+    ILiquidator.LiquidateToTokensWithFlashSwapVars memory vars = ILiquidator.LiquidateToTokensWithFlashSwapVars({
+      borrower: 0x92eA6902C5023CC632e3Fd84dE7CcA6b98FE853d,
+      repayAmount: 1134537086250983,
+      cErc20: ICErc20(0x71ef7EDa2Be775E5A7aa8afD02C45F059833e9d2),
+      cTokenCollateral: ICErc20(0x71ef7EDa2Be775E5A7aa8afD02C45F059833e9d2),
+      flashSwapContract: 0x468cC91dF6F669CaE6cdCE766995Bd7874052FBc,
+      minProfitAmount: 0,
+      redemptionStrategies: new IRedemptionStrategy[](0),
+      strategyData: new bytes[](0),
+      debtFundingStrategies: new IFundsConversionStrategy[](0),
+      debtFundingStrategiesData: new bytes[](0)
+    });
+    liquidatorV3.safeLiquidateToTokensWithFlashLoan(vars);
+
+    uint256 healthFactorAfter = lens.getHealthFactor(0x92eA6902C5023CC632e3Fd84dE7CcA6b98FE853d, pool);
+    emit log_named_uint("hf after", healthFactorAfter);
   }
 
   // TODO test with marginal shortfall for liquidation penalty errors
