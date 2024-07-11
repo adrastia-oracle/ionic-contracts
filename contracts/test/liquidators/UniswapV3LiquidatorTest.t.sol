@@ -64,6 +64,8 @@ contract UniswapV3LiquidatorTest is IonicLiquidatorTest {
     IonicLiquidator _liquidator = new IonicLiquidator();
     _liquidator.initialize(ap.getAddress("wtoken"), ap.getAddress("IUniswapV2Router02"), 30);
     liquidator = _liquidator;
+    liquidator.setPoolLens(0x70BB19a56BfAEc65aE861E6275A90163AbDF36a6);
+    liquidator.setHealthFactorThreshold(1e18);
 
     IonicComptroller pool = IonicComptroller(poolAddress);
     {

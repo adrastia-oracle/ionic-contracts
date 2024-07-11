@@ -1006,8 +1006,8 @@ contract ModeWethUSDTLeveredPositionTest is LeveredPositionTest {
 
     address wethMarket = 0x71ef7EDa2Be775E5A7aa8afD02C45F059833e9d2;
     address USDTMarket = 0x94812F2eEa03A49869f95e1b5868C6f3206ee3D3;
-    address wethWhale = 0x7380511493DD4c2f1dD75E9CCe5bD52C787D4B51;
-    address USDTWhale = 0x082321F9939373b02Ad54ea214BF6e822531e679;
+    address wethWhale = 0x71ef7EDa2Be775E5A7aa8afD02C45F059833e9d2;
+    address USDTWhale = 0x94812F2eEa03A49869f95e1b5868C6f3206ee3D3;
 
     ICErc20[] memory cTokens = new ICErc20[](1);
     cTokens[0] = ICErc20(USDTMarket);
@@ -1077,8 +1077,8 @@ contract ModeWbtcUSDTLeveredPositionTest is LeveredPositionTest {
 
     address wbtcMarket = 0xd70254C3baD29504789714A7c69d60Ec1127375C;
     address USDTMarket = 0x94812F2eEa03A49869f95e1b5868C6f3206ee3D3;
-    address wbtcWhale = 0x3f3429D28438Cc14133966820b8A9Ea61Cf1D4F0;
-    address USDTWhale = 0x082321F9939373b02Ad54ea214BF6e822531e679;
+    address wbtcWhale = 0xd70254C3baD29504789714A7c69d60Ec1127375C;
+    address USDTWhale = 0x94812F2eEa03A49869f95e1b5868C6f3206ee3D3;
 
     ICErc20[] memory cTokens = new ICErc20[](1);
     cTokens[0] = ICErc20(USDTMarket);
