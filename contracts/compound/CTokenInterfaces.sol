@@ -4,6 +4,7 @@ pragma solidity >=0.8.0;
 import { IonicComptroller } from "./ComptrollerInterface.sol";
 import { InterestRateModel } from "./InterestRateModel.sol";
 import { ComptrollerV3Storage } from "./ComptrollerStorage.sol";
+import { AddressesProvider } from "../ionic/AddressesProvider.sol";
 
 abstract contract CTokenAdminStorage {
   /*
@@ -147,6 +148,11 @@ abstract contract CErc20Storage is CTokenAdminStorage {
    * @notice Underlying asset for this CToken
    */
   address public underlying;
+
+  /**
+   * @notice Addresses Provider
+   */
+  AddressesProvider public ap;
 }
 
 abstract contract CTokenBaseEvents {

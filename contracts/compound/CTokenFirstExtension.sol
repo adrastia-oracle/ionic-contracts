@@ -13,6 +13,8 @@ import { Multicall } from "../utils/Multicall.sol";
 
 import { IERC20, SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import { AddressesProvider } from "../ionic/AddressesProvider.sol";
+
 contract CTokenFirstExtension is
   CErc20FirstExtensionBase,
   TokenErrorReporter,
@@ -217,6 +219,13 @@ contract CTokenFirstExtension is
     // Set ERC20 name and symbol
     name = _name;
     symbol = _symbol;
+  }
+
+  function _setAddressesProvider(AddressesProvider _ap) external {
+    // Check caller is admin
+    require(hasAdminRights(), "!admin");
+
+    ap = _ap;
   }
 
   /**

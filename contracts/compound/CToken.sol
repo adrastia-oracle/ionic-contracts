@@ -10,6 +10,8 @@ import { InterestRateModel } from "./InterestRateModel.sol";
 import { ComptrollerV3Storage } from "./ComptrollerStorage.sol";
 import { IFeeDistributor } from "./IFeeDistributor.sol";
 import { DiamondExtension, LibDiamond } from "../ionic/DiamondExtension.sol";
+import { PoolLens } from "../PoolLens.sol";
+import { IonicUniV3Liquidator } from "../IonicUniV3Liquidator.sol";
 
 /**
  * @title Compound's CErc20 Contract
@@ -22,6 +24,16 @@ abstract contract CErc20 is CTokenSecondExtensionBase, TokenErrorReporter, Expon
     require(
       IFeeDistributor(ionicAdmin).canCall(address(comptroller), msg.sender, address(this), msg.sig),
       "not authorized"
+    );
+    _;
+  }
+
+  modifier isMinHFThresholdExceeded(address borrower) {
+    PoolLens lens = PoolLens(ap.getAddress("PoolLens"));
+    IonicUniV3Liquidator liquidator = IonicUniV3Liquidator(payable(ap.getAddress("IonicUniV3Liquidator")));
+    require(
+      lens.getHealthFactor(borrower, comptroller) < liquidator.healthFactorThreshold(),
+      "Min Permissionless Threshold Not Surpassed"
     );
     _;
   }
@@ -122,7 +134,7 @@ abstract contract CErc20 is CTokenSecondExtensionBase, TokenErrorReporter, Expon
     address borrower,
     uint256 repayAmount,
     address cTokenCollateral
-  ) external override isAuthorized returns (uint256) {
+  ) external override isAuthorized isMinHFThresholdExceeded(borrower) returns (uint256) {
     (uint256 err, ) = liquidateBorrowInternal(borrower, repayAmount, cTokenCollateral);
     return err;
   }
