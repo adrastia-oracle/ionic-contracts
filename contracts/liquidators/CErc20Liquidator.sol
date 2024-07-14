@@ -27,7 +27,7 @@ contract CErc20Liquidator is IRedemptionStrategy {
     bytes memory strategyData
   ) external override returns (IERC20Upgradeable outputToken, uint256 outputAmount) {
     // Redeem cErc20 for underlying ERC20 token (and store output as new collateral)
-    ICErc20 cErc20 = ICErc20(address(inputToken));
+    ICErc20Compound cErc20 = ICErc20Compound(address(inputToken));
     uint256 redeemResult = cErc20.redeem(inputAmount);
     require(redeemResult == 0, "Error calling redeeming seized cErc20: error code not equal to 0");
     outputToken = IERC20Upgradeable(cErc20.underlying());
