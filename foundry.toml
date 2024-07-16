@@ -5,6 +5,7 @@ solc_version = "0.8.10"
 libs = ["lib"]
 optimizer = true
 optimizer_runs = 200
+out = "out"
 
 [rpc_endpoints]
 mode = "${MODE_MAINNET_RPC_URL}"

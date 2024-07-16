@@ -320,11 +320,11 @@ export type ChainAddresses = {
   UNISWAP_V2_ROUTER: Address;
   UNISWAP_V2_FACTORY: Address;
   UNISWAP_V3_ROUTER?: Address;
-  PAIR_INIT_HASH: Hash;
+  PAIR_INIT_HASH?: Hash;
   UNISWAP_V3?: {
     FACTORY: Address;
-    PAIR_INIT_HASH: Hash;
-    QUOTER_V2: Address;
+    PAIR_INIT_HASH?: Hash;
+    QUOTER_V2?: Address;
   };
   ALGEBRA_SWAP_ROUTER?: Address;
   SOLIDLY_SWAP_ROUTER?: Address;
@@ -462,7 +462,7 @@ export enum FundingStrategyContract {
 export type ChainDeployment = {
   [contractName: string]: {
     abi?: any;
-    address: Address;
+    address: string;
   };
 };
 

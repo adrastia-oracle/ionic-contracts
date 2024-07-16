@@ -92,7 +92,7 @@ task("pool:create", "Create pool if does not exist")
       "PoolDirectory",
       (await deployments.get("PoolDirectory")).address as Address
     );
-    for (const [index, name] of pools.result) {
+    for (const [, name] of pools.result) {
       if (name === taskArgs.name) {
         throw "Pool already exists";
       }

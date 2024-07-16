@@ -1,6 +1,6 @@
 import { mode } from "viem/chains";
 
-// import deployments from "../../deployments/mode.json";
+import deployments from "../../deploymentsBrief/mode.json";
 import { ChainConfig } from "../types";
 
 import chainAddresses from "./addresses";
@@ -25,8 +25,7 @@ const chainConfig: ChainConfig = {
   deployedPlugins,
   redemptionStrategies,
   fundingStrategies,
-  // chainDeployments: deployments.contracts,
-  chainDeployments: {},
+  chainDeployments: deployments.contracts,
   leveragePairs
 };
 

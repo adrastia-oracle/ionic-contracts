@@ -1404,41 +1404,6 @@ export const abstractErc4626TestAbi = [
     type: 'event',
     anonymous: false,
     inputs: [
-      { name: 'who', internalType: 'address', type: 'address', indexed: false },
-      { name: 'fsig', internalType: 'bytes4', type: 'bytes4', indexed: false },
-      {
-        name: 'keysHash',
-        internalType: 'bytes32',
-        type: 'bytes32',
-        indexed: false,
-      },
-      {
-        name: 'slot',
-        internalType: 'uint256',
-        type: 'uint256',
-        indexed: false,
-      },
-    ],
-    name: 'SlotFound',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
-      { name: 'who', internalType: 'address', type: 'address', indexed: false },
-      {
-        name: 'slot',
-        internalType: 'uint256',
-        type: 'uint256',
-        indexed: false,
-      },
-    ],
-    name: 'WARNING_UninitedSlot',
-  },
-  {
-    type: 'event',
-    anonymous: false,
-    inputs: [
       { name: '', internalType: 'string', type: 'string', indexed: false },
     ],
     name: 'log',

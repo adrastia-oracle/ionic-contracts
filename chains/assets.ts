@@ -5,5 +5,14 @@ export enum assetSymbols {
   mBTC = "mBTC",
   ezETH = "ezETH",
   weETH = "weETH",
-  wrsETH = "wrsETH"
+  wrsETH = "wrsETH",
+  WETH = "WETH",
+  wstETH = "wstETH",
+  cbETH = "cbETH",
+  AERO = "AERO",
+  eUSD = "eUSD",
+  bsdETH = "bsdETH",
+  SNX = "SNX",
+  OP = "OP",
+  LUSD = "LUSD"
 }
