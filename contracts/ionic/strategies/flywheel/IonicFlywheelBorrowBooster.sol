@@ -26,4 +26,3 @@ contract IonicFlywheelBorrowBooster is IIonicFlywheelBorrowBooster {
     return strategy.borrowBalanceCurrent(user);
   }
 }
-

@@ -17,18 +17,18 @@ import { ICErc20 } from "../../../compound/CTokenInterfaces.sol";
          This prevents gaming of the reward calculation function by using manipulated balances when accruing.
 */
 interface IIonicFlywheelBorrowBooster {
-    /**
+  /**
       @notice calculate the boosted supply of a strategy.
       @param strategy the strategy to calculate boosted supply of
       @return the boosted supply
      */
-    function boostedTotalSupply(ICErc20 strategy) external view returns (uint256);
+  function boostedTotalSupply(ICErc20 strategy) external view returns (uint256);
 
-    /**
+  /**
       @notice calculate the boosted balance of a user in a given strategy.
       @param strategy the strategy to calculate boosted balance of
       @param user the user to calculate boosted balance of
       @return the boosted balance
      */
-    function boostedBalanceOf(ICErc20 strategy, address user) external view returns (uint256);
+  function boostedBalanceOf(ICErc20 strategy, address user) external view returns (uint256);
 }
