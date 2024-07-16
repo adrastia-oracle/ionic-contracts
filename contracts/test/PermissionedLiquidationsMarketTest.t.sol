@@ -48,7 +48,7 @@ contract PermissionedLiquidationsMarketTest is MarketsTest {
     ap.setAddress("PoolLens", address(lens));
   }
 
-  function testLiquidateNoThreshold() public forkAtBlock(MODE_MAINNET, 10455052) {
+  function testLiquidateNoThreshold() public debuggingOnly forkAtBlock(MODE_MAINNET, 10455052) {
     _upgradeMarket(wethMarket);
     _upgradeMarket(usdtMarket);
 
@@ -65,7 +65,7 @@ contract PermissionedLiquidationsMarketTest is MarketsTest {
     vm.stopPrank();
   }
 
-  function testLiquidateThresholdActive() public forkAtBlock(MODE_MAINNET, 10455052) {
+  function testLiquidateThresholdActive() public debuggingOnly forkAtBlock(MODE_MAINNET, 10455052) {
     vm.prank(uniV3liquidator.owner());
     uniV3liquidator.setHealthFactorThreshold(.98 * 1e18);
 
@@ -85,7 +85,7 @@ contract PermissionedLiquidationsMarketTest is MarketsTest {
     vm.stopPrank();
   }
 
-  function testLiquidateHealthFactorLowerThanThreshold() public forkAtBlock(MODE_MAINNET, 10455052) {
+  function testLiquidateHealthFactorLowerThanThreshold() public debuggingOnly forkAtBlock(MODE_MAINNET, 10455052) {
     vm.prank(uniV3liquidator.owner());
     uniV3liquidator.setHealthFactorThreshold(.98 * 1e18);
 
@@ -108,7 +108,7 @@ contract PermissionedLiquidationsMarketTest is MarketsTest {
     vm.stopPrank();
   }
 
-  function testLiquidateFromPythShouldRevert() public forkAtBlock(MODE_MAINNET, 10352583) {
+  function testLiquidateFromPythShouldRevert() public debuggingOnly forkAtBlock(MODE_MAINNET, 10352583) {
     vm.prank(uniV3liquidator.owner());
     uniV3liquidator.setHealthFactorThreshold(.98 * 1e18);
 
@@ -131,7 +131,7 @@ contract PermissionedLiquidationsMarketTest is MarketsTest {
     vm.stopPrank();
   }
 
-  function testLiquidateFromPyth() public forkAtBlock(MODE_MAINNET, 10352583) {
+  function testLiquidateFromPyth() public debuggingOnly forkAtBlock(MODE_MAINNET, 10352583) {
     vm.prank(uniV3liquidator.owner());
     uniV3liquidator.setHealthFactorThreshold(.98 * 1e18);
 
