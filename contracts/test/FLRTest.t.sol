@@ -145,7 +145,7 @@ contract FLRTest is BaseTest {
   }
 
   function testNetAprMode() public fork(MODE_MAINNET) {
-    address user = 0xf0AC0F92E7da747E6757379771e5c9e5ea35D85A;
+    address user = 0x8982aa50bb919E42e9204f12e5b59D053Eb2A602;
     int256 blocks = 30 * 24 * 365 * 60;
     int256 apr = lensRouter.getUserNetApr(user, blocks);
     emit log_named_int("apr", apr);

@@ -118,7 +118,7 @@ contract DevTesting is BaseTest {
     uint256 usdcSupplied = usdcMarket.balanceOfUnderlying(rahul);
     uint256 usdtSupplied = usdtMarket.balanceOfUnderlying(rahul);
     uint256 wbtcSupplied = wbtcMarket.balanceOfUnderlying(rahul);
-    emit log_named_uint("wethSupplied", wethSupplied);
+    // emit log_named_uint("wethSupplied", wethSupplied);
     emit log_named_uint("usdcSupplied", usdcSupplied);
     emit log_named_uint("usdtSupplied", usdtSupplied);
     emit log_named_uint("wbtcSupplied", wbtcSupplied);
