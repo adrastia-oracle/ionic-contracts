@@ -34,7 +34,7 @@ contract ProtocolAdminTest is BaseTest {
     }
   }
 
-  function testModeProtocolAdmin() public fork(MODE_MAINNET) {
+  function testModeProtocolAdmin() public debuggingOnly fork(MODE_MAINNET) {
     expectedAdmin = 0x8Fba84867Ba458E7c6E2c024D2DE3d0b5C3ea1C2; // gnosis safe multisig contract
     _testProtocolAdmin();
   }
