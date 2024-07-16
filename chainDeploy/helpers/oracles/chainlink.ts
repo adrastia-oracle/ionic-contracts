@@ -162,7 +162,7 @@ export const deployChainlinkOracle = async ({
     "MasterPriceOracle",
     (await deployments.get("MasterPriceOracle")).address as Address
   );
-  await addUnderlyingsToMpo(mpo, underlyings, chainLinkv2.address, deployer);
+  await addUnderlyingsToMpo(mpo as any, underlyings, chainLinkv2.address, deployer, publicClient, walletClient);
 
   const addressesProvider = await viem.getContractAt(
     "AddressesProvider",
@@ -181,7 +181,7 @@ export const deployChainlinkOracle = async ({
         data: encodeFunctionData({
           abi: addressesProvider.abi,
           functionName: "setAddress",
-          args: [chainLinkv2.address]
+          args: ["ChainlinkPriceOracleV2", chainLinkv2.address]
         })
       });
       addTransaction({

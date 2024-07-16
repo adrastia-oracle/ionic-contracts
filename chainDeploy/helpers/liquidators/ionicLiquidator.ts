@@ -18,7 +18,7 @@ export const deployIonicLiquidator = async ({
   const { deployer, multisig } = await getNamedAccounts();
   const publicClient = await viem.getPublicClient();
 
-  const initializeArgs = [
+  const initializeArgs: [Address, Address, number] = [
     deployConfig.wtoken,
     deployConfig.uniswap.uniswapV2RouterAddress,
     deployConfig.uniswap.flashSwapFee
@@ -107,11 +107,9 @@ export const deployIonicUniV3Liquidator = async ({
 export const configureIonicLiquidator = async ({
   contractName,
   viem,
-  getNamedAccounts,
   chainId,
   deployments
 }: LiquidatorConfigFnParams): Promise<void> => {
-  const { deployer } = await getNamedAccounts();
   const publicClient = await viem.getPublicClient();
 
   const strategies: string[] = [];
@@ -124,7 +122,7 @@ export const configureIonicLiquidator = async ({
   for (const redemptionStrategyConfig of chainIdToConfig[chainId].redemptionStrategies) {
     const { strategy } = redemptionStrategyConfig;
     const redemptionStrategyContract = await viem.getContractAt(
-      strategy,
+      strategy as string,
       (await deployments.get(strategy)).address as Address
     );
 

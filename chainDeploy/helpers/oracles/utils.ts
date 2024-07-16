@@ -1,9 +1,10 @@
-import { Address, encodeFunctionData, GetContractReturnType, PublicClient, WalletClient, zeroAddress } from "viem";
+import { Address, encodeFunctionData, PublicClient, WalletClient, zeroAddress } from "viem";
 import { addTransaction } from "../logging";
 import { masterPriceOracleAbi } from "../../../generated";
+import type { GetContractReturnType } from "@nomicfoundation/hardhat-viem/types.js";
 
 export async function addUnderlyingsToMpo(
-  mpo: GetContractReturnType<typeof masterPriceOracleAbi, WalletClient>,
+  mpo: GetContractReturnType<typeof masterPriceOracleAbi>,
   underlyingsToCheck: Address[],
   oracleAddress: Address,
   deployer: string,
@@ -23,6 +24,7 @@ export async function addUnderlyingsToMpo(
   if (underlyings.length) {
     if ((await mpo.read.admin()).toLowerCase() === deployer.toLowerCase()) {
       const tx = await mpo.write.add([underlyings, oracles]);
+      console.log("tx: ", tx);
       await publicClient.waitForTransactionReceipt({ hash: tx });
       console.log(`Master Price Oracle updated oracles for tokens ${underlyings.join(",")} at ${tx}`);
     } else {
@@ -60,7 +62,7 @@ export async function addUnderlyingsToMpo(
 }
 
 export async function addUnderlyingsToMpoFallback(
-  mpo: GetContractReturnType<typeof masterPriceOracleAbi, WalletClient>,
+  mpo: GetContractReturnType<typeof masterPriceOracleAbi>,
   underlyingsToCheck: Address[],
   oracleAddress: Address,
   deployer: Address,

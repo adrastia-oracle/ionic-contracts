@@ -3,7 +3,7 @@ import { Address } from "viem";
 import { addUnderlyingsToMpoFallback } from "./utils";
 import { RedStoneDeployFnParams } from "../../../chains/types";
 
-export const addRedstoneFallbacks = async ({
+export const addRedstoneWeETHFallbacks = async ({
   viem,
   getNamedAccounts,
   deployments,

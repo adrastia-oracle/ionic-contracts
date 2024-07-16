@@ -3,7 +3,7 @@ import { RedStoneDeployFnParams } from "../../../chains/types";
 import { addUnderlyingsToMpo } from "./utils";
 import { Address } from "viem";
 
-export const deployRedStonePriceOracle = async ({
+export const deployRedStoneWrsETHPriceOracle = async ({
   viem,
   getNamedAccounts,
   deployments,

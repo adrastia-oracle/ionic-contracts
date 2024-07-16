@@ -1,9 +1,15 @@
+import { Hash, zeroAddress } from "viem";
+
 import { ChainDeployConfig, deployChainlinkOracle, deployPythPriceOracle } from "../helpers";
 import { writeTransactionsToFile } from "../helpers/logging";
 import { addRedstoneFallbacks } from "../helpers/oracles/redstoneFallbacks";
 import { addRedstoneWeETHFallbacks } from "../helpers/oracles/redstoneWeETHFallbacks";
 import { deployRedStoneWrsETHPriceOracle } from "../helpers/oracles/redstoneWrsETH";
-import { ChainlinkAsset, PythAsset, RedStoneAsset } from "../../chains/types";
+import { ChainlinkAsset, ChainlinkFeedBaseCurrency, PythAsset, RedStoneAsset } from "../../chains/types";
+import { mode } from "../../chains";
+import { underlying } from "../helpers/utils";
+import { assetSymbols } from "../../chains/assets";
+import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 export const deployConfig: ChainDeployConfig = {
   blocksPerYear: 30 * 60 * 24 * 365, // 30 blocks per minute = 2 sec block time
@@ -69,11 +75,18 @@ const convertedApi3Assets: PythAsset[] = api3Assets.map((asset) => ({
   feed: asset.aggregator
 }));
 
-export const deploy = async ({ run, ethers, getNamedAccounts, deployments }): Promise<void> => {
+export const deploy = async ({
+  run,
+  viem,
+  getNamedAccounts,
+  deployments
+}: HardhatRuntimeEnvironment): Promise<void> => {
+  const { deployer } = await getNamedAccounts();
+  const publicClient = await viem.getPublicClient();
   await deployPythPriceOracle({
     run,
     deployConfig,
-    ethers,
+    viem,
     getNamedAccounts,
     deployments,
     usdToken: mode.chainAddresses.STABLE_TOKEN,
@@ -84,7 +97,7 @@ export const deploy = async ({ run, ethers, getNamedAccounts, deployments }): Pr
 
   await deployChainlinkOracle({
     run,
-    ethers,
+    viem,
     getNamedAccounts,
     deployments,
     deployConfig,
@@ -93,38 +106,43 @@ export const deploy = async ({ run, ethers, getNamedAccounts, deployments }): Pr
   });
 
   await addRedstoneFallbacks({
-    ethers,
+    viem,
     getNamedAccounts,
     deployments,
-    assets: [...pythAssets, convertedApi3Assets[0]]
+    redStoneAssets: [...pythAssets, convertedApi3Assets[0]],
+    redStoneAddress: "0x7C1DAAE7BB0688C9bfE3A918A4224041c7177256",
+    run,
+    deployConfig
   });
 
   await addRedstoneWeETHFallbacks({
-    ethers,
+    viem,
     getNamedAccounts,
     deployments,
-    assets: [convertedApi3Assets[1]]
+    redStoneAssets: [convertedApi3Assets[1]],
+    redStoneAddress: "0x7C1DAAE7BB0688C9bfE3A918A4224041c7177256",
+    run,
+    deployConfig
   });
 
   await deployRedStoneWrsETHPriceOracle({
     run,
     deployConfig,
-    ethers,
+    viem,
     getNamedAccounts,
     deployments,
     redStoneAddress: "0x7C1DAAE7BB0688C9bfE3A918A4224041c7177256",
     redStoneAssets: redStoneWrsETHAssets
   });
 
-  const deployer = await ethers.getNamedSigner("deployer");
   const algebraSwapLiquidator = await deployments.deploy("AlgebraSwapLiquidator", {
-    from: deployer.address,
+    from: deployer,
     args: [],
     log: true,
     waitConfirmations: 1
   });
   if (algebraSwapLiquidator.transactionHash) {
-    await ethers.provider.waitForTransaction(algebraSwapLiquidator.transactionHash);
+    await publicClient.waitForTransactionReceipt({ hash: algebraSwapLiquidator.transactionHash as Hash });
   }
   console.log("AlgebraSwapLiquidator: ", algebraSwapLiquidator.address);
   await writeTransactionsToFile();

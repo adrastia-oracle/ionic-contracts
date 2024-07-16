@@ -15,7 +15,6 @@ const func: DeployFunction = async ({ viem, getNamedAccounts, deployments }) => 
   let tx: Hash;
 
   const comp = await deployments.deploy("Comptroller", {
-    contract: "Comptroller.sol:Comptroller",
     from: deployer,
     args: [],
     log: true

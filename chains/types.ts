@@ -71,7 +71,7 @@ export type PluginConfig = {
 
 export type ChainlinkAsset = {
   symbol: string;
-  aggregator: string;
+  aggregator: Hash;
   feedBaseCurrency: ChainlinkFeedBaseCurrency;
 };
 
@@ -283,7 +283,7 @@ export type PythSpecificParams = {
 
 export type SupportedAsset = {
   symbol: string;
-  underlying: string;
+  underlying: Address;
   name: string;
   decimals: number;
   extraDocs?: string;
@@ -313,26 +313,26 @@ export enum OracleTypes {
 }
 
 export type ChainAddresses = {
-  W_TOKEN: string;
-  STABLE_TOKEN: string;
-  W_BTC_TOKEN: string;
-  W_TOKEN_USD_CHAINLINK_PRICE_FEED: string;
-  UNISWAP_V2_ROUTER: string;
-  UNISWAP_V2_FACTORY: string;
-  UNISWAP_V3_ROUTER?: string;
-  PAIR_INIT_HASH: string;
+  W_TOKEN: Address;
+  STABLE_TOKEN: Address;
+  W_BTC_TOKEN: Address;
+  W_TOKEN_USD_CHAINLINK_PRICE_FEED: Hash;
+  UNISWAP_V2_ROUTER: Address;
+  UNISWAP_V2_FACTORY: Address;
+  UNISWAP_V3_ROUTER?: Address;
+  PAIR_INIT_HASH: Hash;
   UNISWAP_V3?: {
-    FACTORY: string;
-    PAIR_INIT_HASH: string;
-    QUOTER_V2: string;
+    FACTORY: Address;
+    PAIR_INIT_HASH: Hash;
+    QUOTER_V2: Address;
   };
-  ALGEBRA_SWAP_ROUTER?: string;
-  SOLIDLY_SWAP_ROUTER?: string;
-  GAMMA_ALGEBRA_SWAP_ROUTER?: string;
-  GAMMA_ALGEBRA_UNI_PROXY?: string;
-  GAMMA_UNISWAP_V3_SWAP_ROUTER?: string;
-  GAMMA_UNISWAP_V3_UNI_PROXY?: string;
-  EXPRESS_RELAY?: string;
+  ALGEBRA_SWAP_ROUTER?: Address;
+  SOLIDLY_SWAP_ROUTER?: Address;
+  GAMMA_ALGEBRA_SWAP_ROUTER?: Address;
+  GAMMA_ALGEBRA_UNI_PROXY?: Address;
+  GAMMA_UNISWAP_V3_SWAP_ROUTER?: Address;
+  GAMMA_UNISWAP_V3_UNI_PROXY?: Address;
+  EXPRESS_RELAY?: Address;
 };
 
 export type ChainConfig = {
@@ -388,8 +388,8 @@ export enum RedemptionStrategyContract {
   KimUniV2Liquidator = "KimUniV2Liquidator"
 }
 
-type SupportedPlugin = null;
-declare type DeployedPlugins = {
+export type SupportedPlugin = null;
+export type DeployedPlugins = {
   [pluginAddress: string]: SupportedPlugin;
 };
 
@@ -467,11 +467,25 @@ export type ChainDeployment = {
 };
 
 export type LeveragePoolConfig = {
-  pool: string;
+  pool: Address;
   pairs: LeveragePair[];
 };
 
 export type LeveragePair = {
-  borrow: string;
-  collateral: string;
+  borrow: Address;
+  collateral: Address;
 };
+
+export interface MarketConfig {
+  underlying: Address;
+  comptroller: Address;
+  adminFee: number;
+  collateralFactor: number;
+  interestRateModel: Address;
+  reserveFactor: number;
+  plugin?: Address;
+  bypassPriceFeedCheck: boolean;
+  feeDistributor: Address;
+  symbol: string;
+  name: string;
+}
