@@ -19,7 +19,7 @@ import { PoolLens } from "../PoolLens.sol";
 import { PoolLensSecondary } from "../PoolLensSecondary.sol";
 import { JumpRateModel } from "../compound/JumpRateModel.sol";
 import { LeveredPositionsLens } from "../ionic/levered/LeveredPositionsLens.sol";
-import { IonicFlywheelLensRouter, IonicComptroller, ICErc20, ERC20, IPriceOracle } from "../ionic/strategies/flywheel/IonicFlywheelLensRouter.sol";
+import { IonicFlywheelLensRouter, IonicComptroller, ICErc20, ERC20, IPriceOracle_IFLR } from "../ionic/strategies/flywheel/IonicFlywheelLensRouter.sol";
 import { PoolDirectory } from "../PoolDirectory.sol";
 
 import "forge-std/console.sol";
@@ -628,6 +628,11 @@ contract DevTesting is BaseTest {
     uint256 price = mpo.price(weEth);
     emit log_named_uint("price of weEth", price);
     assertEq(price, 1036212437077011599);
+  }
+
+  function testPERLiquidation() public debuggingOnly forkAtBlock(MODE_MAINNET, 10255413) {
+    vm.prank(0x5Cc070844E98F4ceC5f2fBE1592fB1ed73aB7b48);
+    _functionCall(0xa12c1E460c06B1745EFcbfC9A1f666a8749B0e3A, hex"20b72325000000000000000000000000f28570694a6c9cd0494955966ae75af61abf5a0700000000000000000000000000000000000000000000000001bc1214ed792fbb0000000000000000000000004341620757bee7eb4553912fafc963e59c949147000000000000000000000000c53edeafb6d502daec5a7015d67936cea0cd0f520000000000000000000000000000000000000000000000000000000000000000", "error in call");
   }
 
   function _functionCall(

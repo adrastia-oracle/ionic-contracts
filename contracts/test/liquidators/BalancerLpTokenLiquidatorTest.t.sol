@@ -5,7 +5,7 @@ import { IRedemptionStrategy } from "../../liquidators/IRedemptionStrategy.sol";
 import { BalancerLpTokenLiquidator } from "../../liquidators/BalancerLpTokenLiquidator.sol";
 import { BalancerSwapLiquidator } from "../../liquidators/BalancerSwapLiquidator.sol";
 
-import { ICErc20 } from "../../external/compound/ICErc20.sol";
+import { ICErc20Compound as ICErc20 } from "../../external/compound/ICErc20.sol";
 import "../../external/balancer/IBalancerPool.sol";
 import "../../external/balancer/IBalancerVault.sol";
 

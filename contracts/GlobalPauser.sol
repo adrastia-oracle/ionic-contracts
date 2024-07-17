@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import { IonicComptroller } from "./compound/ComptrollerInterface.sol";
 import { ICErc20 } from "./compound/CTokenInterfaces.sol";
-import { Ownable2Step } from "openzeppelin-contracts/contracts/access/Ownable2Step.sol";
+import { Ownable2Step } from "@openzeppelin/contracts/access/Ownable2Step.sol";
 
 interface IPoolDirectory {
   struct Pool {
