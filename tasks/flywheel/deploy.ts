@@ -128,3 +128,101 @@ task("flywheel:add-to-pool", "Create pool if does not exist")
     await publicClient.waitForTransactionReceipt({ hash: addTx });
     console.log({ addTx });
   });
+
+task("flywheel:deploy-dynamic-rewards-fw", "Deploy dynamic rewards flywheel for LM rewards")
+  .addParam("name", "String to append to the flywheel contract name", undefined, types.string)
+  .addParam("rewardToken", "Reward token of flywheel", undefined, types.string)
+  .addParam("booster", "Kind of booster flywheel to use", "IonicFlywheelBorrowBooster", undefined, types.string)
+  .addParam("strategies", "address of strategy for which to enable the flywheel", undefined, types.string)
+  .addParam("pool", "comptroller to which to add the flywheel", undefined, types.string)
+  .setAction(
+    async ({ signer, name, rewardToken, strategies, pool, booster }, { viem, deployments, run, getNamedAccounts }) => {
+      const { deployer } = await getNamedAccounts();
+      const publicClient = await viem.getPublicClient();
+      let flywheelBooster;
+      let contractName;
+      if (booster != "") {
+        flywheelBooster = await viem.getContractAt(booster, (await deployments.get(booster)).address as Address);
+      }
+      else flywheelBooster = zeroAddress;
+
+      if (name.includes("Borrow")) {
+        contractName = "IonicFlywheelBorrow";
+      }
+      else contractName = "IonicFlywheel"
+
+      console.log({ signer, name, rewardToken, booster, strategies, pool });
+      const flywheel = await deployments.deploy(`${contractName}_${name}`, {
+        contract: contractName,
+        from: deployer,
+        log: true,
+        proxy: {
+          proxyContract: "OpenZeppelinTransparentProxy",
+          execute: {
+            init: {
+              methodName: "initialize",
+              args: [rewardToken, zeroAddress, flywheelBooster, deployer]
+            }
+          },
+          owner: deployer
+        },
+        waitConfirmations: 1
+      });
+
+      console.log(`Deployed flywheel: ${flywheel.address}`);
+      const rewards = await run("flywheel:deploy-dynamic-rewards", { name: name, flywheel: flywheel.address });
+      console.log(`Deployed rewards: ${rewards.address}`);
+      const _flywheel = await viem.getContractAt(`${contractName}`, flywheel.address as Address);
+      const tx = await _flywheel.write.setFlywheelRewards([rewards.address]);
+      await publicClient.waitForTransactionReceipt({ hash: tx });
+
+      console.log(`Set rewards (${rewards.address}) to flywheel (${flywheel.address})`);
+      const strategyAddresses = strategies.split(",");
+      for (const strategy of strategyAddresses) {
+        console.log(`Adding strategy ${strategy} to flywheel ${flywheel.address}`);
+        await run("flywheel:add-strategy-for-rewards", { flywheel: flywheel.address, strategy });
+        console.log(`Added strategy (${strategy}) to flywheel (${flywheel.address})`);
+      }
+      await run("flywheel:add-to-pool", { flywheel: flywheel.address, pool });
+      console.log(`Added flywheel (${flywheel.address}) to pool (${pool})`);
+    }
+  );
+
+task("flywheel:deploy-dynamic-rewards", "Deploy dynamic rewards flywheel for LM rewards")
+  .addParam("name", "String to append to the flywheel contract name", undefined, types.string)
+  .addParam("flywheel", "flywheel to which to add the rewards contract", undefined, types.string)
+  .setAction(async ({ name, flywheel }, { deployments, getNamedAccounts }) => {
+    const { deployer } = await getNamedAccounts();
+    const rewards = await deployments.deploy(`IonicFlywheelDynamicRewards_${name}`, {
+      contract: "IonicFlywheelDynamicRewards",
+      from: deployer,
+      log: true,
+      args: [
+        flywheel, // flywheel
+        2592000 // owner
+      ],
+      waitConfirmations: 1
+    });
+
+    const ionicSdkModule = await import("../ionicSdk");
+    const sdk = await ionicSdkModule.getOrCreateIonic(deployer);
+
+    const tx = await sdk.setFlywheelRewards(flywheel, rewards.address);
+    await tx.wait();
+    return rewards;
+  });
+
+task("flywheel:deploy-borrow-booster", "Deploy flywheel borrow bosster for LM rewards")
+  .addParam("name", "String to append to the flywheel contract name", undefined, types.string)
+  .setAction(async ({ name, flywheel }, { deployments, getNamedAccounts }) => {
+    const { deployer } = await getNamedAccounts();
+    const booster = await deployments.deploy(`IonicFlywheelBorrowBooster_${name}`, {
+      contract: "IonicFlywheelBorrowBooster",
+      from: deployer,
+      log: true,
+      args: [],
+      waitConfirmations: 1
+    });
+
+    return booster;
+  });
