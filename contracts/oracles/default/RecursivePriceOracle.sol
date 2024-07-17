@@ -20,7 +20,7 @@ contract RecursivePriceOracle is IPriceOracle {
    */
   function getUnderlyingPrice(ICToken cToken) external view override returns (uint256) {
     // Get cToken's underlying cToken
-    ICToken underlying = ICToken(ICErc20(address(cToken)).underlying());
+    ICToken underlying = ICToken(ICErc20Compound(address(cToken)).underlying());
 
     // Get Comptroller
     IComptroller comptroller = IComptroller(underlying.comptroller());

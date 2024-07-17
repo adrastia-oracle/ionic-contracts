@@ -15,7 +15,7 @@ import { FlywheelStaticRewards } from "flywheel-v2/rewards/FlywheelStaticRewards
 import { FuseFlywheelCore } from "fuse-flywheel/FuseFlywheelCore.sol";
 
 import { CErc20 } from "../compound/CToken.sol";
-import { IonicFlywheelLensRouter, IonicComptroller, ICErc20, ERC20, IPriceOracle } from "../ionic/strategies/flywheel/IonicFlywheelLensRouter.sol";
+import { IonicFlywheelLensRouter, IonicComptroller, ICErc20, ERC20, IPriceOracle_IFLR } from "../ionic/strategies/flywheel/IonicFlywheelLensRouter.sol";
 import { IonicFlywheel } from "../ionic/strategies/flywheel/IonicFlywheel.sol";
 import { PoolDirectory } from "../PoolDirectory.sol";
 import { IonicFlywheelCore } from "../ionic/strategies/flywheel/IonicFlywheelCore.sol";
@@ -84,7 +84,7 @@ contract FLRTest is BaseTest {
     emit log_named_uint("block.timestamp", block.timestamp);
     emit log_named_uint(
       "underlying price",
-      IPriceOracle(address(IonicComptroller(0x5EB884651F50abc72648447dCeabF2db091e4117).oracle())).price(
+      IPriceOracle_IFLR(address(IonicComptroller(0x5EB884651F50abc72648447dCeabF2db091e4117).oracle())).price(
         address(0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c)
       )
     );
@@ -145,7 +145,7 @@ contract FLRTest is BaseTest {
   }
 
   function testNetAprMode() public fork(MODE_MAINNET) {
-    address user = 0xf0AC0F92E7da747E6757379771e5c9e5ea35D85A;
+    address user = 0x8982aa50bb919E42e9204f12e5b59D053Eb2A602;
     int256 blocks = 30 * 24 * 365 * 60;
     int256 apr = lensRouter.getUserNetApr(user, blocks);
     emit log_named_int("apr", apr);
