@@ -14,5 +14,7 @@ export enum assetSymbols {
   bsdETH = "bsdETH",
   SNX = "SNX",
   OP = "OP",
-  LUSD = "LUSD"
+  LUSD = "LUSD",
+  SOV = "SOV",
+  tBTC = "tBTC"
 }
