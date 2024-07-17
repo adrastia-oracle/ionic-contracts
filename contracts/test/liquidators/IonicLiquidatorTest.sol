@@ -5,6 +5,7 @@ import { IERC20Upgradeable } from "openzeppelin-contracts-upgradeable/contracts/
 import "openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 
 import { IonicLiquidator, ILiquidator } from "../../IonicLiquidator.sol";
+import { IonicUniV3Liquidator } from "../../IonicUniV3Liquidator.sol";
 import { ICurvePool } from "../../external/curve/ICurvePool.sol";
 import { CurveSwapLiquidatorFunder } from "../../liquidators/CurveSwapLiquidatorFunder.sol";
 import { UniswapV3LiquidatorFunder } from "../../liquidators/UniswapV3LiquidatorFunder.sol";
@@ -23,6 +24,9 @@ import { BasePriceOracle } from "../../oracles/BasePriceOracle.sol";
 
 import { BaseTest } from "../config/BaseTest.t.sol";
 import { UpgradesBaseTest } from "../UpgradesBaseTest.sol";
+import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import { ProxyAdmin } from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
+import { PoolLens } from "../../PoolLens.sol";
 
 contract MockRedemptionStrategy is IRedemptionStrategy {
   function redeem(
@@ -75,7 +79,7 @@ contract IonicLiquidatorTest is UpgradesBaseTest {
       swapRouter = 0x5D61c537393cf21893BE619E36fC94cd73C77DD3; // kim router
       //quoter = IUniswapV3Quoter(0x7Fd569b2021850fbA53887dd07736010aCBFc787); // other sup quoter?
       quoter = IUniswapV3Quoter(0x5E6AEbab1AD525f5336Bd12E6847b851531F72ba); // sup quoter
-      usdcWhale = 0xB4fb31E7B1471A8e52dD1e962A281a732EaD59c1;
+      usdcWhale = 0x34b83A3759ba4c9F99c339604181bf6bBdED4C79; // vault
       wethWhale = 0xF4C85269240C1D447309fA602A90ac23F1CB0Dc0;
       poolAddress = 0xFB3323E24743Caf4ADD0fDCCFB268565c0685556;
       //uniV3PooForFlash = 0x293f2B2c17f8cEa4db346D87Ef5712C9dd0491EF; // kim weth-usdc pool
@@ -130,31 +134,100 @@ contract IonicLiquidatorTest is UpgradesBaseTest {
     }
   }
 
-  function useThisToTestLiquidations() public fork(POLYGON_MAINNET) {
-    address borrower = 0xA4F4406D3dc6482dB1397d0ad260fd223C8F37FC;
-    address debtMarketAddr = 0x456b363D3dA38d3823Ce2e1955362bBd761B324b;
-    address collateralMarketAddr = 0x28D0d45e593764C4cE88ccD1C033d0E2e8cE9aF3;
+  function testSpecificLiquidation() public debuggingOnly fork(MODE_MAINNET) {
+    address borrower = 0x5834a3AAFA83A53822B313994Bb554d8E8c215dF;
+    address debtMarketAddr = 0x71ef7EDa2Be775E5A7aa8afD02C45F059833e9d2;
+    address collateralMarketAddr = 0x94812F2eEa03A49869f95e1b5868C6f3206ee3D3;
+
+    liquidator = ILiquidator(payable(ap.getAddress("IonicUniV3Liquidator")));
 
     ILiquidator.LiquidateToTokensWithFlashSwapVars memory vars;
     vars.borrower = borrower;
     vars.cErc20 = ICErc20(debtMarketAddr);
     vars.cTokenCollateral = ICErc20(collateralMarketAddr);
-    vars.repayAmount = 70565471214557927746795;
-    vars.flashSwapContract = 0x6e7a5FAFcec6BB1e78bAE2A1F0B612012BF14827;
+    vars.repayAmount = 0x408c7a4d7c4092;
+    vars.flashSwapContract = 0x468cC91dF6F669CaE6cdCE766995Bd7874052FBc;
     vars.minProfitAmount = 0;
-    vars.redemptionStrategies = new IRedemptionStrategy[](0);
-    vars.strategyData = new bytes[](0);
-    vars.debtFundingStrategies = new IFundsConversionStrategy[](1);
-    vars.debtFundingStrategiesData = new bytes[](1);
+    vars.redemptionStrategies = new IRedemptionStrategy[](1);
+    vars.strategyData = new bytes[](1);
+    vars.debtFundingStrategies = new IFundsConversionStrategy[](0);
+    vars.debtFundingStrategiesData = new bytes[](0);
 
-    vars.debtFundingStrategies[0] = IFundsConversionStrategy(0x98110E8482E4e286716AC0671438BDd84C4D838c);
-    vars.debtFundingStrategiesData[
+    vars.redemptionStrategies[0] = IFundsConversionStrategy(0x5cA3fd2c285C4138185Ef1BdA7573D415020F3C8);
+    vars.strategyData[
         0
-      ] = hex"0000000000000000000000002791bca1f2de4661ed88a30c99a7a9449aa84174000000000000000000000000aec757bf73cc1f4609a1459205835dd40b4e3f290000000000000000000000000000000000000000000000000000000000000960";
+      ] = hex"0000000000000000000000004200000000000000000000000000000000000006000000000000000000000000ac48fcf1049668b285f3dc72483df5ae2162f7e8";
 
-    // liquidator.safeLiquidateToTokensWithFlashLoan(vars);
+    liquidator.safeLiquidateToTokensWithFlashLoan(vars);
+  }
 
-    vars.cErc20.comptroller();
+  function testWithdrawalLiquidator() public debuggingOnly fork(MODE_MAINNET) {
+    TransparentUpgradeableProxy proxyV3 = TransparentUpgradeableProxy(payable(ap.getAddress("IonicUniV3Liquidator")));
+    IonicUniV3Liquidator implV3 = new IonicUniV3Liquidator();
+    IonicUniV3Liquidator liquidatorV3 = IonicUniV3Liquidator(payable(ap.getAddress("IonicUniV3Liquidator")));
+    ProxyAdmin proxyAdmin = ProxyAdmin(ap.getAddress("DefaultProxyAdmin"));
+
+    vm.startPrank(proxyAdmin.owner());
+    proxyAdmin.upgrade(proxyV3, address(implV3));
+    vm.stopPrank();
+
+    vm.prank(0x4200000000000000000000000000000000000016);
+    (bool success, ) = address(liquidatorV3).call{ value: 1 ether }("");
+    require(success, "transfer of funds failed");
+
+    uint256 beforeBalance = liquidatorV3.owner().balance;
+
+    vm.prank(liquidatorV3.owner());
+    liquidatorV3.withdrawAll();
+
+    emit log_named_uint("balance of liquidator", liquidatorV3.owner().balance);
+
+    assertEq(liquidatorV3.owner().balance, beforeBalance + 1 ether);
+    assertEq(address(liquidatorV3).balance, 0);
+  }
+
+  function testLiquidateAfterUpgradeLiquidator() public debuggingOnly forkAtBlock(MODE_MAINNET, 9382006) {
+    // upgrade IonicLiquidator
+    TransparentUpgradeableProxy proxyV3 = TransparentUpgradeableProxy(payable(ap.getAddress("IonicUniV3Liquidator")));
+    IonicUniV3Liquidator implV3 = new IonicUniV3Liquidator();
+    IonicUniV3Liquidator liquidatorV3 = IonicUniV3Liquidator(payable(ap.getAddress("IonicUniV3Liquidator")));
+    PoolLens lens = PoolLens(0x70BB19a56BfAEc65aE861E6275A90163AbDF36a6);
+
+    ProxyAdmin proxyAdmin = ProxyAdmin(ap.getAddress("DefaultProxyAdmin"));
+
+    vm.startPrank(proxyAdmin.owner());
+    proxyAdmin.upgrade(proxyV3, address(implV3));
+    vm.stopPrank();
+
+    vm.startPrank(0x1155b614971f16758C92c4890eD338C9e3ede6b7);
+    liquidatorV3.setPoolLens(address(lens));
+    liquidatorV3.setHealthFactorThreshold(1e18);
+    vm.stopPrank();
+
+    IonicComptroller pool = IonicComptroller(0xFB3323E24743Caf4ADD0fDCCFB268565c0685556);
+    (, , uint256 liquidity, uint256 shortfall) = pool.getAccountLiquidity(0x92eA6902C5023CC632e3Fd84dE7CcA6b98FE853d);
+    emit log_named_uint("liquidity", liquidity);
+    emit log_named_uint("shortfall", shortfall);
+
+    uint256 healthFactor = lens.getHealthFactor(0x92eA6902C5023CC632e3Fd84dE7CcA6b98FE853d, pool);
+    emit log_named_uint("hf before", healthFactor);
+
+    ILiquidator.LiquidateToTokensWithFlashSwapVars memory vars = ILiquidator.LiquidateToTokensWithFlashSwapVars({
+      borrower: 0x92eA6902C5023CC632e3Fd84dE7CcA6b98FE853d,
+      repayAmount: 1134537086250983,
+      cErc20: ICErc20(0x71ef7EDa2Be775E5A7aa8afD02C45F059833e9d2),
+      cTokenCollateral: ICErc20(0x71ef7EDa2Be775E5A7aa8afD02C45F059833e9d2),
+      flashSwapContract: 0x468cC91dF6F669CaE6cdCE766995Bd7874052FBc,
+      minProfitAmount: 0,
+      redemptionStrategies: new IRedemptionStrategy[](0),
+      strategyData: new bytes[](0),
+      debtFundingStrategies: new IFundsConversionStrategy[](0),
+      debtFundingStrategiesData: new bytes[](0)
+    });
+    liquidatorV3.safeLiquidateToTokensWithFlashLoan(vars);
+
+    uint256 healthFactorAfter = lens.getHealthFactor(0x92eA6902C5023CC632e3Fd84dE7CcA6b98FE853d, pool);
+    emit log_named_uint("hf after", healthFactorAfter);
   }
 
   // TODO test with marginal shortfall for liquidation penalty errors

@@ -162,7 +162,8 @@ contract MaxBorrowTest is WithPool {
         someBorrower,
         address(marketToBorrow),
         0,
-        borrowAmount
+        borrowAmount,
+        0
       );
       emit log("errBefore");
       emit log_uint(errBefore);
@@ -182,7 +183,8 @@ contract MaxBorrowTest is WithPool {
       someBorrower,
       address(marketToBorrow),
       0,
-      borrowAmount
+      borrowAmount,
+      0
     );
     emit log("errAfter");
     emit log_uint(errAfter);

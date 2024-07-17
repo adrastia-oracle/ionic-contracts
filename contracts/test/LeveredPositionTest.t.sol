@@ -86,13 +86,16 @@ contract LeveredPositionLensTest is BaseTest {
   }
 
   function testPrintLeveredPositions() public debuggingOnly fork(POLYGON_MAINNET) {
-    address[] memory markets = factory.getWhitelistedCollateralMarkets();
+    address[] memory accounts = factory.getAccountsWithOpenPositions();
 
-    emit log_named_array("markets", markets);
+    emit log_named_array("accounts", accounts);
 
-    for (uint256 j = 0; j < markets.length; j++) {
-      address[] memory borrowable = factory.getBorrowableMarketsByCollateral(ICErc20(markets[j]));
-      emit log_named_array("borrowable", borrowable);
+    for (uint256 j = 0; j < accounts.length; j++) {
+      address[] memory positions;
+      bool[] memory closed;
+      (positions, closed) = factory.getPositionsByAccount(accounts[j]);
+      emit log_named_array("positions", positions);
+      //emit log_named_array("closed", closed);
     }
   }
 }
@@ -955,6 +958,143 @@ contract DavosUsdcDusdLeveredPositionTest is LeveredPositionTest {
     _configurePair(dusdMarket, usdcMarket);
     _fundMarketAndSelf(ICErc20(dusdMarket), dusdWhale);
     _fundMarketAndSelf(ICErc20(usdcMarket), usdcWhale);
+
+    (position, maxLevRatio, minLevRatio) = _openLeveredPosition(address(this), depositAmount);
+  }
+}
+
+contract ModeWethUSDCLeveredPositionTest is LeveredPositionTest {
+  function setUp() public fork(MODE_MAINNET) {}
+
+  function afterForkSetUp() internal override {
+    super.afterForkSetUp();
+
+    uint256 depositAmount = 1e17;
+
+    address wethMarket = 0x71ef7EDa2Be775E5A7aa8afD02C45F059833e9d2;
+    address USDCMarket = 0x2BE717340023C9e14C1Bb12cb3ecBcfd3c3fB038;
+    address wethWhale = 0x7380511493DD4c2f1dD75E9CCe5bD52C787D4B51;
+    address USDCWhale = 0x34b83A3759ba4c9F99c339604181bf6bBdED4C79;
+
+    ICErc20[] memory cTokens = new ICErc20[](1);
+    cTokens[0] = ICErc20(USDCMarket);
+
+    uint256[] memory newBorrowCaps = new uint256[](1);
+    newBorrowCaps[0] = 1e36;
+
+    IonicComptroller comptroller = IonicComptroller(ICErc20(wethMarket).comptroller());
+
+    vm.prank(comptroller.admin());
+    comptroller._setMarketBorrowCaps(cTokens, newBorrowCaps);
+    vm.stopPrank();
+
+    _configurePair(wethMarket, USDCMarket);
+    _fundMarketAndSelf(ICErc20(wethMarket), wethWhale);
+    _fundMarketAndSelf(ICErc20(USDCMarket), USDCWhale);
+
+    (position, maxLevRatio, minLevRatio) = _openLeveredPosition(address(this), depositAmount);
+  }
+}
+
+contract ModeWethUSDTLeveredPositionTest is LeveredPositionTest {
+  function setUp() public fork(MODE_MAINNET) {}
+
+  function afterForkSetUp() internal override {
+    super.afterForkSetUp();
+
+    uint256 depositAmount = 1e18;
+
+    address wethMarket = 0x71ef7EDa2Be775E5A7aa8afD02C45F059833e9d2;
+    address USDTMarket = 0x94812F2eEa03A49869f95e1b5868C6f3206ee3D3;
+    address wethWhale = 0x71ef7EDa2Be775E5A7aa8afD02C45F059833e9d2;
+    address USDTWhale = 0x94812F2eEa03A49869f95e1b5868C6f3206ee3D3;
+
+    ICErc20[] memory cTokens = new ICErc20[](1);
+    cTokens[0] = ICErc20(USDTMarket);
+
+    uint256[] memory newBorrowCaps = new uint256[](1);
+    newBorrowCaps[0] = 1e36;
+
+    IonicComptroller comptroller = IonicComptroller(ICErc20(wethMarket).comptroller());
+
+    vm.prank(comptroller.admin());
+    comptroller._setMarketBorrowCaps(cTokens, newBorrowCaps);
+
+    _configurePair(wethMarket, USDTMarket);
+    _fundMarketAndSelf(ICErc20(wethMarket), wethWhale);
+    _fundMarketAndSelf(ICErc20(USDTMarket), USDTWhale);
+
+    (position, maxLevRatio, minLevRatio) = _openLeveredPosition(address(this), depositAmount);
+  }
+}
+
+contract ModeWbtcUSDCLeveredPositionTest is LeveredPositionTest {
+  function setUp() public fork(MODE_MAINNET) {}
+
+  function afterForkSetUp() internal override {
+    super.afterForkSetUp();
+
+    uint256 depositAmount = 1e6;
+
+    address wbtcMarket = 0xd70254C3baD29504789714A7c69d60Ec1127375C;
+    address USDCMarket = 0x2BE717340023C9e14C1Bb12cb3ecBcfd3c3fB038;
+    address wbtcWhale = 0x3f3429D28438Cc14133966820b8A9Ea61Cf1D4F0;
+    address USDCWhale = 0x34b83A3759ba4c9F99c339604181bf6bBdED4C79;
+
+    ICErc20[] memory cTokens = new ICErc20[](1);
+    cTokens[0] = ICErc20(USDCMarket);
+
+    uint256[] memory newBorrowCaps = new uint256[](1);
+    newBorrowCaps[0] = 1e36;
+
+    IonicComptroller comptroller = IonicComptroller(ICErc20(wbtcMarket).comptroller());
+
+    vm.prank(comptroller.admin());
+    comptroller._setMarketBorrowCaps(cTokens, newBorrowCaps);
+    vm.stopPrank();
+
+    IERC20Upgradeable token = IERC20Upgradeable(ICErc20(wbtcMarket).underlying());
+
+    _configurePair(wbtcMarket, USDCMarket);
+
+    uint256 allTokens = token.balanceOf(wbtcWhale);
+
+    vm.prank(wbtcWhale);
+    token.transfer(address(this), allTokens);
+    vm.stopPrank();
+
+    (position, maxLevRatio, minLevRatio) = _openLeveredPosition(address(this), depositAmount);
+  }
+}
+
+contract ModeWbtcUSDTLeveredPositionTest is LeveredPositionTest {
+  function setUp() public fork(MODE_MAINNET) {}
+
+  function afterForkSetUp() internal override {
+    super.afterForkSetUp();
+
+    uint256 depositAmount = 1e6;
+
+    address wbtcMarket = 0xd70254C3baD29504789714A7c69d60Ec1127375C;
+    address USDTMarket = 0x94812F2eEa03A49869f95e1b5868C6f3206ee3D3;
+    address wbtcWhale = 0xd70254C3baD29504789714A7c69d60Ec1127375C;
+    address USDTWhale = 0x94812F2eEa03A49869f95e1b5868C6f3206ee3D3;
+
+    ICErc20[] memory cTokens = new ICErc20[](1);
+    cTokens[0] = ICErc20(USDTMarket);
+
+    uint256[] memory newBorrowCaps = new uint256[](1);
+    newBorrowCaps[0] = 1e36;
+
+    IonicComptroller comptroller = IonicComptroller(ICErc20(wbtcMarket).comptroller());
+
+    vm.prank(comptroller.admin());
+    comptroller._setMarketBorrowCaps(cTokens, newBorrowCaps);
+    vm.stopPrank();
+
+    _configurePair(wbtcMarket, USDTMarket);
+    _fundMarketAndSelf(ICErc20(wbtcMarket), wbtcWhale);
+    _fundMarketAndSelf(ICErc20(USDTMarket), USDTWhale);
 
     (position, maxLevRatio, minLevRatio) = _openLeveredPosition(address(this), depositAmount);
   }

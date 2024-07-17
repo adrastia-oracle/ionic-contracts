@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity 0.8.10;
+pragma solidity ^0.8.10;
 
 import "flywheel-v2/interfaces/IFlywheelBooster.sol";
 import { ICErc20 } from "../../../compound/CTokenInterfaces.sol";

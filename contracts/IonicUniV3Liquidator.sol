@@ -16,15 +16,20 @@ import { IUniswapV3Quoter } from "./external/uniswap/quoter/interfaces/IUniswapV
 
 import { ICErc20 } from "./compound/CTokenInterfaces.sol";
 
+import "./PoolLens.sol";
+import "@pythnetwork/express-relay-sdk-solidity/IExpressRelay.sol";
+import "@pythnetwork/express-relay-sdk-solidity/IExpressRelayFeeReceiver.sol";
+
 /**
  * @title IonicUniV3Liquidator
  * @author Veliko Minkov <v.minkov@dcvx.io> (https://github.com/vminkov)
  * @notice IonicUniV3Liquidator liquidates unhealthy borrowers with flashloan support.
  */
-contract IonicUniV3Liquidator is OwnableUpgradeable, ILiquidator, IUniswapV3FlashCallback {
+contract IonicUniV3Liquidator is OwnableUpgradeable, ILiquidator, IUniswapV3FlashCallback, IExpressRelayFeeReceiver {
   using AddressUpgradeable for address payable;
   using SafeERC20Upgradeable for IERC20Upgradeable;
 
+  event VaultReceivedETH(address sender, uint256 amount, bytes permissionKey);
   /**
    * @dev Cached liquidator profit exchange source.
    * ERC20 token address or the zero address for NATIVE.
@@ -48,6 +53,27 @@ contract IonicUniV3Liquidator is OwnableUpgradeable, ILiquidator, IUniswapV3Flas
   mapping(address => bool) public redemptionStrategiesWhitelist;
   IUniswapV3Quoter public quoter;
 
+  /**
+   * @dev Addres of Pyth Express Relay for preventing value leakage in liquidations.
+   */
+  IExpressRelay public expressRelay;
+  /**
+   * @dev Pool Lens.
+   */
+  PoolLens public lens;
+  /**
+   * @dev Health Factor below which PER permissioning is bypassed.
+   */
+  uint256 public healthFactorThreshold;
+
+  modifier onlyPERPermissioned(address borrower, ICErc20 cToken) {
+    uint256 currentHealthFactor = lens.getHealthFactor(borrower, cToken.comptroller());
+    if (currentHealthFactor > healthFactorThreshold) {
+      require(expressRelay.isPermissioned(address(this), abi.encode(borrower)), "invalid liquidation");
+    }
+    _;
+  }
+
   function initialize(address _wtoken, address _quoter) external initializer {
     __Ownable_init();
     W_NATIVE_ADDRESS = _wtoken;
@@ -68,15 +94,21 @@ contract IonicUniV3Liquidator is OwnableUpgradeable, ILiquidator, IUniswapV3Flas
     ICErc20 cErc20,
     ICErc20 cTokenCollateral,
     uint256 minOutputAmount
-  ) external returns (uint256) {
+  ) external onlyPERPermissioned(borrower, cTokenCollateral) returns (uint256) {
     // Transfer tokens in, approve to cErc20, and liquidate borrow
     require(repayAmount > 0, "Repay amount (transaction value) must be greater than 0.");
     IERC20Upgradeable underlying = IERC20Upgradeable(cErc20.underlying());
     underlying.safeTransferFrom(msg.sender, address(this), repayAmount);
     underlying.approve(address(cErc20), repayAmount);
     require(cErc20.liquidateBorrow(borrower, repayAmount, address(cTokenCollateral)) == 0, "Liquidation failed.");
-    // Transfer seized amount to sender
-    return transferSeizedFunds(address(cTokenCollateral), minOutputAmount);
+
+    // Redeem seized cTokens for underlying asset
+    uint256 seizedCTokenAmount = cTokenCollateral.balanceOf(address(this));
+    require(seizedCTokenAmount > 0, "No cTokens seized.");
+    uint256 redeemResult = cTokenCollateral.redeem(seizedCTokenAmount);
+    require(redeemResult == 0, "Error calling redeeming seized cToken: error code not equal to 0");
+
+    return transferSeizedFunds(address(cTokenCollateral.underlying()), minOutputAmount);
   }
 
   /**
@@ -95,6 +127,7 @@ contract IonicUniV3Liquidator is OwnableUpgradeable, ILiquidator, IUniswapV3Flas
 
   function safeLiquidateToTokensWithFlashLoan(LiquidateToTokensWithFlashSwapVars calldata vars)
     external
+    onlyPERPermissioned(vars.borrower, vars.cTokenCollateral)
     returns (uint256)
   {
     // Input validation
@@ -145,10 +178,35 @@ contract IonicUniV3Liquidator is OwnableUpgradeable, ILiquidator, IUniswapV3Flas
   }
 
   /**
+   * @notice receiveAuctionProceedings function - receives native token from the express relay
+   * You can use permission key to distribute the received funds to users who got liquidated, LPs, etc...
+   */
+  function receiveAuctionProceedings(bytes calldata permissionKey) external payable {
+    emit VaultReceivedETH(msg.sender, msg.value, permissionKey);
+  }
+
+  function withdrawAll() external onlyOwner {
+    uint256 balance = address(this).balance;
+    require(balance > 0, "No Ether left to withdraw");
+
+    // Transfer all Ether to the owner
+    (bool sent, ) = msg.sender.call{ value: balance }("");
+    require(sent, "Failed to send Ether");
+  }
+
+  /**
    * @dev Callback function for Uniswap flashloans.
    */
 
   function supV3FlashCallback(
+    uint256 fee0,
+    uint256 fee1,
+    bytes calldata data
+  ) external {
+    uniswapV3FlashCallback(fee0, fee1, data);
+  }
+
+  function algebraFlashCallback(
     uint256 fee0,
     uint256 fee1,
     bytes calldata data
@@ -331,6 +389,19 @@ contract IonicUniV3Liquidator is OwnableUpgradeable, ILiquidator, IUniswapV3Flas
     for (uint256 i = 0; i < strategies.length; i++) {
       redemptionStrategiesWhitelist[address(strategies[i])] = whitelisted[i];
     }
+  }
+
+  function setExpressRelay(address _expressRelay) external onlyOwner {
+    expressRelay = IExpressRelay(_expressRelay);
+  }
+
+  function setPoolLens(address _poolLens) external onlyOwner {
+    lens = PoolLens(_poolLens);
+  }
+
+  function setHealthFactorThreshold(uint256 _healthFactorThreshold) external onlyOwner {
+    require(_healthFactorThreshold <= 1e18, "Invalid Health Factor Threshold");
+    healthFactorThreshold = _healthFactorThreshold;
   }
 
   /**

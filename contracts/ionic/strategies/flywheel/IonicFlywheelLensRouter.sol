@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity 0.8.10;
+pragma solidity ^0.8.10;
 
 import { ERC20 } from "solmate/tokens/ERC20.sol";
 
@@ -189,7 +189,22 @@ contract IonicFlywheelLensRouter {
     ICErc20 market,
     int256 blocksPerYear
   ) internal returns (int256) {
-    return (int256(market.supplyRatePerBlock()) - int256(market.borrowRatePerBlock())) * blocksPerYear;
+    uint256 borrows = market.borrowBalanceCurrent(user);
+    uint256 supplied = market.balanceOfUnderlying(user);
+    uint256 supplyRatePerBlock = market.supplyRatePerBlock();
+    uint256 borrowRatePerBlock = market.borrowRatePerBlock();
+
+    IonicComptroller comptroller = market.comptroller();
+    BasePriceOracle oracle = comptroller.oracle();
+    uint256 assetPrice = oracle.getUnderlyingPrice(market);
+    uint256 collateralValue = (supplied * assetPrice) / 1e18;
+    uint256 borrowsValue = (borrows * assetPrice) / 1e18;
+
+    uint256 yieldValuePerBlock = collateralValue * supplyRatePerBlock;
+    uint256 interestOwedValuePerBlock = borrowsValue * borrowRatePerBlock;
+
+    if (collateralValue == 0) return 0;
+    return ((int256(yieldValuePerBlock) - int256(interestOwedValuePerBlock)) * blocksPerYear) / int256(collateralValue);
   }
 
   struct AdjustedUserNetAprVars {

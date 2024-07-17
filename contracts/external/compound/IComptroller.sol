@@ -35,7 +35,8 @@ interface IComptroller {
     address account,
     address cTokenModify,
     uint256 redeemTokens,
-    uint256 borrowAmount
+    uint256 borrowAmount,
+    uint256 repayAmount
   )
     external
     view

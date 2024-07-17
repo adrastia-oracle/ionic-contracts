@@ -75,7 +75,7 @@ contract LeveredPositionsLens is Initializable {
 
     uint256 borrowAmount = ((_targetLeverageRatio - 1e18) * _equityAmount * collateralAssetPrice) /
       (stableAssetPrice * 1e18);
-    return _stableMarket.borrowRatePerBlockAfterBorrow(borrowAmount);
+    return _stableMarket.borrowRatePerBlockAfterBorrow(borrowAmount) * factory.blocksPerYear();
   }
 
   /// @notice this is a lens fn, it is not intended to be used on-chain

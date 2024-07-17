@@ -48,4 +48,24 @@ contract AlgebraSwapLiquidatorTest is BaseTest {
     assertEq(address(outputToken), ankrBnbAddress, "!ankrbnb output");
     assertApproxEqRel(outputAmount, inputAmount, 8e16, "!ankrbnb amount");
   }
+
+  function testModeKimV4RedemptionStrategy() public fork(MODE_MAINNET) {
+    address MODE_EZETH = 0x2416092f143378750bb29b79eD961ab195CcEea5;
+    address ezEthWhale = 0x2344F131B07E6AFd943b0901C55898573F0d1561;
+    address kimV4Router = 0xAc48FcF1049668B285f3dC72483DF5Ae2162f7e8;
+    address modeWETH = ap.getAddress("wtoken");
+
+    IERC20Upgradeable ezETH = IERC20Upgradeable(MODE_EZETH);
+    vm.prank(ezEthWhale);
+    ezETH.transfer(address(liquidator), 1e18);
+
+    (IERC20Upgradeable outputToken, uint256 outputAmount) = liquidator.redeem(
+      ezETH,
+      inputAmount,
+      abi.encode(modeWETH, kimV4Router)
+    );
+
+    assertEq(address(outputToken), modeWETH, "!WETH output token");
+    assertApproxEqRel(outputAmount, inputAmount, 8e16, "!weth amount");
+  }
 }

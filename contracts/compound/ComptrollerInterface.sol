@@ -41,7 +41,8 @@ interface ComptrollerInterface {
     address account,
     address cTokenModify,
     uint256 redeemTokens,
-    uint256 borrowAmount
+    uint256 borrowAmount,
+    uint256 repayAmount
   )
     external
     view
@@ -136,10 +137,10 @@ interface ComptrollerInterface {
     external
     view
     returns (
-      uint256,
-      uint256,
-      uint256,
-      uint256
+      uint256 error,
+      uint256 collateralValue,
+      uint256 liquidity,
+      uint256 shortfall
     );
 
   function liquidateCalculateSeizeTokens(
@@ -215,6 +216,13 @@ interface ComptrollerExtensionInterface {
   function getAllMarkets() external view returns (ICErc20[] memory);
 
   function getAllBorrowers() external view returns (address[] memory);
+
+  function getAllBorrowersCount() external view returns (uint256);
+
+  function getPaginatedBorrowers(uint256 page, uint256 pageSize)
+    external
+    view
+    returns (uint256 _totalPages, address[] memory _pageOfBorrowers);
 
   function getRewardsDistributors() external view returns (address[] memory);
 
