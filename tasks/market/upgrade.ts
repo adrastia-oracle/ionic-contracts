@@ -114,3 +114,58 @@ task("market:upgrade:safe", "Upgrades a market's implementation")
       );
     }
   });
+
+task("markets:setAddressesProvider", "Upgrades all pools comptroller implementations whose autoimplementatoins are on")
+  .addFlag("forceUpgrade", "If the pool upgrade should be forced")
+  .setAction(async ({ forceUpgrade }, { viem, getChainId, deployments, run }) => {
+    const publicClient = await viem.getPublicClient();
+
+    const poolDirectory = await viem.getContractAt(
+      "PoolDirectory",
+      (await deployments.get("PoolDirectory")).address as Address
+    );
+    const feeDistributor = await viem.getContractAt(
+      "FeeDistributor",
+      (await deployments.get("FeeDistributor")).address as Address
+    );
+
+    await run("market:set-latest");
+
+    const [, pools] = await poolDirectory.read.getActivePools();
+    for (let i = 0; i < pools.length; i++) {
+      const pool = pools[i];
+      console.log("pool", { name: pool.name, address: pool.comptroller });
+
+      try {
+        const comptrollerAsExtension = await viem.getContractAt("IonicComptroller", pool.comptroller);
+        const markets = await comptrollerAsExtension.read.getAllMarkets();
+        for (let j = 0; j < markets.length; j++) {
+          const market = markets[j];
+          console.log(`market address ${market}`);
+          const cTokenInstance = await viem.getContractAt("ICErc20", market);
+          const [latestImpl] = await feeDistributor.read.latestCErc20Delegate([
+            await cTokenInstance.read.delegateType()
+          ]);
+          await run("market:upgrade:safe", {
+            marketAddress: market,
+            implementationAddress: latestImpl,
+          });
+          const ap = await viem.getContractAt(
+            "AddressesProvider",
+            (await deployments.get("AddressesProvider")).address as Address
+          );
+          const ctokenAsExt = await viem.getContractAt("CTokenFirstExtension", market)
+          const setAPTX = await ctokenAsExt.write._setAddressesProvider(ap);
+          const receipt = await publicClient.waitForTransactionReceipt({
+            hash: setAPTX
+          });
+          if (receipt.status !== "success") {
+            throw `Failed to set AddressesProvider`;
+          }
+          console.log(`AddressesProvider successfully set to ${ap}`);
+        }
+      } catch (e) {
+        console.error(`error while upgrading the pool ${JSON.stringify(pool)}`, e);
+      }
+    }
+  });
