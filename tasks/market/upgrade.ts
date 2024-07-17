@@ -115,7 +115,7 @@ task("market:upgrade:safe", "Upgrades a market's implementation")
     }
   });
 
-task("markets:setAddressesProvider", "Upgrades all pools comptroller implementations whose autoimplementatoins are on")
+task("markets:upgrade-and-setup", "Upgrades all pools comptroller implementations whose autoimplementatoins are on")
   .addFlag("forceUpgrade", "If the pool upgrade should be forced")
   .setAction(async ({ forceUpgrade }, { viem, getChainId, deployments, run }) => {
     const publicClient = await viem.getPublicClient();
@@ -130,6 +130,19 @@ task("markets:setAddressesProvider", "Upgrades all pools comptroller implementat
     );
 
     await run("market:set-latest");
+
+    const addressProvider = await viem.getContractAt(
+      "AddressesProvider",
+      (await deployments.get("AddressesProvider")).address as Address
+    );
+    const setIDTX = await addressProvider.write.setAddress("PoolLens", (await deployments.get("PoolLens")).address as Address);
+    const receipt = await publicClient.waitForTransactionReceipt({
+      hash: setIDTX
+    });
+    if (receipt.status !== "success") {
+      throw `Failed to set PoolLens id`;
+    }
+    console.log(`PoolLens id successfully set`);
 
     const [, pools] = await poolDirectory.read.getActivePools();
     for (let i = 0; i < pools.length; i++) {
