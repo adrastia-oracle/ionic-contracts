@@ -115,7 +115,7 @@ task("market:upgrade:safe", "Upgrades a market's implementation")
     }
   });
 
-task("markets:upgrade-and-setup", "Upgrades all pools comptroller implementations whose autoimplementatoins are on")
+task("markets:upgrade-and-setup", "Upgrades all markets and sets addresses provider on them")
   .addFlag("forceUpgrade", "If the pool upgrade should be forced")
   .setAction(async ({ forceUpgrade }, { viem, getChainId, deployments, run }) => {
     const publicClient = await viem.getPublicClient();
@@ -129,13 +129,11 @@ task("markets:upgrade-and-setup", "Upgrades all pools comptroller implementation
       (await deployments.get("FeeDistributor")).address as Address
     );
 
-    await run("market:set-latest");
-
     const addressProvider = await viem.getContractAt(
       "AddressesProvider",
       (await deployments.get("AddressesProvider")).address as Address
     );
-    const setIDTX = await addressProvider.write.setAddress("PoolLens", (await deployments.get("PoolLens")).address as Address);
+    const setIDTX = await addressProvider.write.setAddress("PoolLens", (await deployments.get("PoolLens")).address);
     const receipt = await publicClient.waitForTransactionReceipt({
       hash: setIDTX
     });
