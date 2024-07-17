@@ -163,4 +163,272 @@ contract PermissionedLiquidationsMarketTest is MarketsTest {
     require(success, "Transaction failed");
     vm.stopPrank();
   }
+
+  struct CErc20StorageStruct {
+    address ionicAdmin;
+    string name;
+    string symbol;
+    uint8 decimals;
+    address comptroller;
+    address interestRateModel;
+    uint256 adminFeeMantissa;
+    uint256 ionicFeeMantissa;
+    uint256 reserveFactorMantissa;
+    uint256 accrualBlockNumber;
+    uint256 borrowIndex;
+    uint256 totalBorrows;
+    uint256 totalReserves;
+    uint256 totalAdminFees;
+    uint256 totalIonicFees;
+    uint256 totalSupply;
+    uint256 protocolSeizeShareMantissa;
+    uint256 feeSeizeShareMantissa;
+    address underlying;
+    address ap;
+    uint256 cash;
+    uint256 totalBorrowsCurrent;
+    uint256 balanceOfUnderlying;
+    uint256 borrowBalanceCurrent;
+    uint256 supplyRatePerBlock;
+    uint256 borrowRatePerBlock;
+    uint256 exchangeRateCurrent;
+    uint256 totalUnderlyingSupplied;
+    uint256 allowance;
+    uint256 balanceOf;
+  }
+
+  function testStorageLayoutSafe() public debuggingOnly forkAtBlock(MODE_MAINNET, 10352583) {
+    // Capture storage layout before upgrade
+    CErc20StorageStruct memory storageDataBefore;
+    CErc20StorageStruct memory storageDataAfter;
+
+    address owner = 0xbF86588d7e20502f1b250561da775343Dfdb3250; // Use a valid spender address as needed
+
+    storageDataBefore.ionicAdmin = wethMarket.ionicAdmin();
+    storageDataBefore.name = wethMarket.name();
+    storageDataBefore.symbol = wethMarket.symbol();
+    storageDataBefore.decimals = wethMarket.decimals();
+    storageDataBefore.comptroller = address(wethMarket.comptroller());
+    storageDataBefore.interestRateModel = address(wethMarket.interestRateModel());
+    storageDataBefore.adminFeeMantissa = wethMarket.adminFeeMantissa();
+    storageDataBefore.ionicFeeMantissa = wethMarket.ionicFeeMantissa();
+    storageDataBefore.reserveFactorMantissa = wethMarket.reserveFactorMantissa();
+    storageDataBefore.accrualBlockNumber = wethMarket.accrualBlockNumber();
+    storageDataBefore.borrowIndex = wethMarket.borrowIndex();
+    storageDataBefore.totalBorrows = wethMarket.totalBorrows();
+    storageDataBefore.totalReserves = wethMarket.totalReserves();
+    storageDataBefore.totalAdminFees = wethMarket.totalAdminFees();
+    storageDataBefore.totalIonicFees = wethMarket.totalIonicFees();
+    storageDataBefore.totalSupply = wethMarket.totalSupply();
+    storageDataBefore.underlying = wethMarket.underlying();
+    storageDataBefore.cash = wethMarket.getCash();
+    storageDataBefore.totalBorrowsCurrent = wethMarket.totalBorrowsCurrent();
+    storageDataBefore.balanceOfUnderlying = wethMarket.balanceOfUnderlying(owner);
+    storageDataBefore.borrowBalanceCurrent = wethMarket.borrowBalanceCurrent(owner);
+    storageDataBefore.supplyRatePerBlock = wethMarket.supplyRatePerBlock();
+    storageDataBefore.borrowRatePerBlock = wethMarket.borrowRatePerBlock();
+    storageDataBefore.exchangeRateCurrent = wethMarket.exchangeRateCurrent();
+    storageDataBefore.totalUnderlyingSupplied = wethMarket.getTotalUnderlyingSupplied();
+    storageDataBefore.balanceOf = wethMarket.balanceOf(owner);
+    storageDataBefore.protocolSeizeShareMantissa = wethMarket.protocolSeizeShareMantissa();
+    storageDataBefore.feeSeizeShareMantissa = wethMarket.feeSeizeShareMantissa();
+
+    // Upgrade the market
+    _upgradeMarket(wethMarket);
+
+    vm.prank(wethMarket.ionicAdmin());
+    CTokenFirstExtension(address(wethMarket))._setAddressesProvider(0xb0033576a9E444Dd801d5B69e1b63DBC459A6115);
+
+    storageDataAfter.ionicAdmin = wethMarket.ionicAdmin();
+    storageDataAfter.name = wethMarket.name();
+    storageDataAfter.symbol = wethMarket.symbol();
+    storageDataAfter.decimals = wethMarket.decimals();
+    storageDataAfter.comptroller = address(wethMarket.comptroller());
+    storageDataAfter.interestRateModel = address(wethMarket.interestRateModel());
+    storageDataAfter.adminFeeMantissa = wethMarket.adminFeeMantissa();
+    storageDataAfter.ionicFeeMantissa = wethMarket.ionicFeeMantissa();
+    storageDataAfter.reserveFactorMantissa = wethMarket.reserveFactorMantissa();
+    storageDataAfter.accrualBlockNumber = wethMarket.accrualBlockNumber();
+    storageDataAfter.borrowIndex = wethMarket.borrowIndex();
+    storageDataAfter.totalBorrows = wethMarket.totalBorrows();
+    storageDataAfter.totalReserves = wethMarket.totalReserves();
+    storageDataAfter.totalAdminFees = wethMarket.totalAdminFees();
+    storageDataAfter.totalIonicFees = wethMarket.totalIonicFees();
+    storageDataAfter.totalSupply = wethMarket.totalSupply();
+    storageDataAfter.underlying = wethMarket.underlying();
+    storageDataAfter.cash = wethMarket.getCash();
+    storageDataAfter.totalBorrowsCurrent = wethMarket.totalBorrowsCurrent();
+    storageDataAfter.balanceOfUnderlying = wethMarket.balanceOfUnderlying(owner);
+    storageDataAfter.borrowBalanceCurrent = wethMarket.borrowBalanceCurrent(owner);
+    storageDataAfter.supplyRatePerBlock = wethMarket.supplyRatePerBlock();
+    storageDataAfter.borrowRatePerBlock = wethMarket.borrowRatePerBlock();
+    storageDataAfter.exchangeRateCurrent = wethMarket.exchangeRateCurrent();
+    storageDataAfter.totalUnderlyingSupplied = wethMarket.getTotalUnderlyingSupplied();
+    storageDataAfter.balanceOf = wethMarket.balanceOf(owner);
+    storageDataAfter.protocolSeizeShareMantissa = wethMarket.protocolSeizeShareMantissa();
+    storageDataAfter.feeSeizeShareMantissa = wethMarket.feeSeizeShareMantissa();
+
+    emit log_named_address("Storage ionicAdmin (before)", storageDataBefore.ionicAdmin);
+    emit log_named_address("Storage ionicAdmin (after)", storageDataAfter.ionicAdmin);
+
+    emit log_named_string("Storage name (before)", storageDataBefore.name);
+    emit log_named_string("Storage name (after)", storageDataAfter.name);
+
+    emit log_named_string("Storage symbol (before)", storageDataBefore.symbol);
+    emit log_named_string("Storage symbol (after)", storageDataAfter.symbol);
+
+    emit log_named_uint("Storage decimals (before)", storageDataBefore.decimals);
+    emit log_named_uint("Storage decimals (after)", storageDataAfter.decimals);
+
+    emit log_named_address("Storage comptroller (before)", storageDataBefore.comptroller);
+    emit log_named_address("Storage comptroller (after)", storageDataAfter.comptroller);
+
+    emit log_named_address("Storage interestRateModel (before)", storageDataBefore.interestRateModel);
+    emit log_named_address("Storage interestRateModel (after)", storageDataAfter.interestRateModel);
+
+    emit log_named_uint("Storage adminFeeMantissa (before)", storageDataBefore.adminFeeMantissa);
+    emit log_named_uint("Storage adminFeeMantissa (after)", storageDataAfter.adminFeeMantissa);
+
+    emit log_named_uint("Storage ionicFeeMantissa (before)", storageDataBefore.ionicFeeMantissa);
+    emit log_named_uint("Storage ionicFeeMantissa (after)", storageDataAfter.ionicFeeMantissa);
+
+    emit log_named_uint("Storage reserveFactorMantissa (before)", storageDataBefore.reserveFactorMantissa);
+    emit log_named_uint("Storage reserveFactorMantissa (after)", storageDataAfter.reserveFactorMantissa);
+
+    emit log_named_uint("Storage accrualBlockNumber (before)", storageDataBefore.accrualBlockNumber);
+    emit log_named_uint("Storage accrualBlockNumber (after)", storageDataAfter.accrualBlockNumber);
+
+    emit log_named_uint("Storage borrowIndex (before)", storageDataBefore.borrowIndex);
+    emit log_named_uint("Storage borrowIndex (after)", storageDataAfter.borrowIndex);
+
+    emit log_named_uint("Storage totalBorrows (before)", storageDataBefore.totalBorrows);
+    emit log_named_uint("Storage totalBorrows (after)", storageDataAfter.totalBorrows);
+
+    emit log_named_uint("Storage totalReserves (before)", storageDataBefore.totalReserves);
+    emit log_named_uint("Storage totalReserves (after)", storageDataAfter.totalReserves);
+
+    emit log_named_uint("Storage totalAdminFees (before)", storageDataBefore.totalAdminFees);
+    emit log_named_uint("Storage totalAdminFees (after)", storageDataAfter.totalAdminFees);
+
+    emit log_named_uint("Storage totalIonicFees (before)", storageDataBefore.totalIonicFees);
+    emit log_named_uint("Storage totalIonicFees (after)", storageDataAfter.totalIonicFees);
+
+    emit log_named_uint("Storage totalSupply (before)", storageDataBefore.totalSupply);
+    emit log_named_uint("Storage totalSupply (after)", storageDataAfter.totalSupply);
+
+    emit log_named_uint("Storage protocolSeizeShareMantissa (before)", storageDataBefore.protocolSeizeShareMantissa);
+    emit log_named_uint("Storage protocolSeizeShareMantissa (after)", storageDataAfter.protocolSeizeShareMantissa);
+
+    emit log_named_uint("Storage feeSeizeShareMantissa (before)", storageDataBefore.feeSeizeShareMantissa);
+    emit log_named_uint("Storage feeSeizeShareMantissa (after)", storageDataAfter.feeSeizeShareMantissa);
+
+    emit log_named_address("Storage underlying (before)", storageDataBefore.underlying);
+    emit log_named_address("Storage underlying (after)", storageDataAfter.underlying);
+
+    emit log_named_uint("Storage cash (before)", storageDataBefore.cash);
+    emit log_named_uint("Storage cash (after)", storageDataAfter.cash);
+
+    emit log_named_uint("Storage totalBorrowsCurrent (before)", storageDataBefore.totalBorrowsCurrent);
+    emit log_named_uint("Storage totalBorrowsCurrent (after)", storageDataAfter.totalBorrowsCurrent);
+
+    emit log_named_uint("Storage balanceOfUnderlying (before)", storageDataBefore.balanceOfUnderlying);
+    emit log_named_uint("Storage balanceOfUnderlying (after)", storageDataAfter.balanceOfUnderlying);
+
+    emit log_named_uint("Storage borrowBalanceCurrent (before)", storageDataBefore.borrowBalanceCurrent);
+    emit log_named_uint("Storage borrowBalanceCurrent (after)", storageDataAfter.borrowBalanceCurrent);
+
+    emit log_named_uint("Storage supplyRatePerBlock (before)", storageDataBefore.supplyRatePerBlock);
+    emit log_named_uint("Storage supplyRatePerBlock (after)", storageDataAfter.supplyRatePerBlock);
+
+    emit log_named_uint("Storage borrowRatePerBlock (before)", storageDataBefore.borrowRatePerBlock);
+    emit log_named_uint("Storage borrowRatePerBlock (after)", storageDataAfter.borrowRatePerBlock);
+
+    emit log_named_uint("Storage exchangeRateCurrent (before)", storageDataBefore.exchangeRateCurrent);
+    emit log_named_uint("Storage exchangeRateCurrent (after)", storageDataAfter.exchangeRateCurrent);
+
+    emit log_named_uint("Storage totalUnderlyingSupplied (before)", storageDataBefore.totalUnderlyingSupplied);
+    emit log_named_uint("Storage totalUnderlyingSupplied (after)", storageDataAfter.totalUnderlyingSupplied);
+
+    emit log_named_uint("Storage allowance (before)", storageDataBefore.allowance);
+    emit log_named_uint("Storage allowance (after)", storageDataAfter.allowance);
+
+    emit log_named_uint("Storage balanceOf (before)", storageDataBefore.balanceOf);
+    emit log_named_uint("Storage balanceOf (after)", storageDataAfter.balanceOf);
+
+    emit log_named_address("Storage ap (before)", storageDataBefore.ap);
+    emit log_named_address("Storage ap (after)", storageDataAfter.ap);
+
+    assertEq(storageDataBefore.ionicAdmin, storageDataAfter.ionicAdmin, "Mismatch in ionicAdmin");
+    assertEq(storageDataBefore.name, storageDataAfter.name, "Mismatch in name");
+    assertEq(storageDataBefore.symbol, storageDataAfter.symbol, "Mismatch in symbol");
+    assertEq(storageDataBefore.decimals, storageDataAfter.decimals, "Mismatch in decimals");
+    assertEq(storageDataBefore.comptroller, storageDataAfter.comptroller, "Mismatch in comptroller");
+    assertEq(storageDataBefore.interestRateModel, storageDataAfter.interestRateModel, "Mismatch in interestRateModel");
+    assertEq(storageDataBefore.adminFeeMantissa, storageDataAfter.adminFeeMantissa, "Mismatch in adminFeeMantissa");
+    assertEq(storageDataBefore.ionicFeeMantissa, storageDataAfter.ionicFeeMantissa, "Mismatch in ionicFeeMantissa");
+    assertEq(
+      storageDataBefore.reserveFactorMantissa,
+      storageDataAfter.reserveFactorMantissa,
+      "Mismatch in reserveFactorMantissa"
+    );
+    assertEq(
+      storageDataBefore.accrualBlockNumber,
+      storageDataAfter.accrualBlockNumber,
+      "Mismatch in accrualBlockNumber"
+    );
+    assertEq(storageDataBefore.borrowIndex, storageDataAfter.borrowIndex, "Mismatch in borrowIndex");
+    assertEq(storageDataBefore.totalBorrows, storageDataAfter.totalBorrows, "Mismatch in totalBorrows");
+    assertEq(storageDataBefore.totalReserves, storageDataAfter.totalReserves, "Mismatch in totalReserves");
+    assertEq(storageDataBefore.totalAdminFees, storageDataAfter.totalAdminFees, "Mismatch in totalAdminFees");
+    assertEq(storageDataBefore.totalIonicFees, storageDataAfter.totalIonicFees, "Mismatch in totalIonicFees");
+    assertEq(storageDataBefore.totalSupply, storageDataAfter.totalSupply, "Mismatch in totalSupply");
+    assertEq(storageDataBefore.underlying, storageDataAfter.underlying, "Mismatch in underlying");
+    assertEq(storageDataBefore.cash, storageDataAfter.cash, "Mismatch in cash");
+    assertEq(
+      storageDataBefore.totalBorrowsCurrent,
+      storageDataAfter.totalBorrowsCurrent,
+      "Mismatch in totalBorrowsCurrent"
+    );
+    assertEq(
+      storageDataBefore.balanceOfUnderlying,
+      storageDataAfter.balanceOfUnderlying,
+      "Mismatch in balanceOfUnderlying"
+    );
+    assertEq(
+      storageDataBefore.borrowBalanceCurrent,
+      storageDataAfter.borrowBalanceCurrent,
+      "Mismatch in borrowBalanceCurrent"
+    );
+    assertEq(
+      storageDataBefore.supplyRatePerBlock,
+      storageDataAfter.supplyRatePerBlock,
+      "Mismatch in supplyRatePerBlock"
+    );
+    assertEq(
+      storageDataBefore.borrowRatePerBlock,
+      storageDataAfter.borrowRatePerBlock,
+      "Mismatch in borrowRatePerBlock"
+    );
+    assertEq(
+      storageDataBefore.exchangeRateCurrent,
+      storageDataAfter.exchangeRateCurrent,
+      "Mismatch in exchangeRateCurrent"
+    );
+    assertEq(
+      storageDataBefore.totalUnderlyingSupplied,
+      storageDataAfter.totalUnderlyingSupplied,
+      "Mismatch in totalUnderlyingSupplied"
+    );
+    assertEq(storageDataBefore.balanceOf, storageDataAfter.balanceOf, "Mismatch in balanceOf");
+    assertEq(
+      storageDataBefore.protocolSeizeShareMantissa,
+      storageDataAfter.protocolSeizeShareMantissa,
+      "Mismatch in protocolSeizeShareMantissa"
+    );
+    assertEq(
+      storageDataBefore.feeSeizeShareMantissa,
+      storageDataAfter.feeSeizeShareMantissa,
+      "Mismatch in feeSeizeShareMantissa"
+    );
+  }
 }
