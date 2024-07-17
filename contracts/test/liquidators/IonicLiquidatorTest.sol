@@ -230,6 +230,68 @@ contract IonicLiquidatorTest is UpgradesBaseTest {
     emit log_named_uint("hf after", healthFactorAfter);
   }
 
+  function testLiquidateAfterUpgradeLiquidatorExpressRelay() public debuggingOnly forkAtBlock(MODE_MAINNET, 9382006) {
+    // upgrade IonicLiquidator
+    TransparentUpgradeableProxy proxyV3 = TransparentUpgradeableProxy(payable(ap.getAddress("IonicUniV3Liquidator")));
+    IonicUniV3Liquidator implV3 = new IonicUniV3Liquidator();
+    IonicUniV3Liquidator liquidatorV3 = IonicUniV3Liquidator(payable(ap.getAddress("IonicUniV3Liquidator")));
+    PoolLens lens = PoolLens(0x70BB19a56BfAEc65aE861E6275A90163AbDF36a6);
+    address expressRelay = makeAddr("expressRelay");
+
+    ProxyAdmin proxyAdmin = ProxyAdmin(ap.getAddress("DefaultProxyAdmin"));
+
+    vm.startPrank(proxyAdmin.owner());
+    proxyAdmin.upgrade(proxyV3, address(implV3));
+    vm.stopPrank();
+
+    vm.startPrank(0x1155b614971f16758C92c4890eD338C9e3ede6b7);
+    liquidatorV3.setPoolLens(address(lens));
+    liquidatorV3.setHealthFactorThreshold(95e16);
+    liquidatorV3.setExpressRelay(expressRelay);
+    vm.stopPrank();
+
+    IonicComptroller pool = IonicComptroller(0xFB3323E24743Caf4ADD0fDCCFB268565c0685556);
+    (, , uint256 liquidity, uint256 shortfall) = pool.getAccountLiquidity(0x92eA6902C5023CC632e3Fd84dE7CcA6b98FE853d);
+    emit log_named_uint("liquidity", liquidity);
+    emit log_named_uint("shortfall", shortfall);
+
+    uint256 healthFactor = lens.getHealthFactor(0x92eA6902C5023CC632e3Fd84dE7CcA6b98FE853d, pool);
+    emit log_named_uint("hf before", healthFactor);
+
+    address borrower = address(0x92eA6902C5023CC632e3Fd84dE7CcA6b98FE853d);
+
+    ILiquidator.LiquidateToTokensWithFlashSwapVars memory vars = ILiquidator.LiquidateToTokensWithFlashSwapVars({
+      borrower: borrower,
+      repayAmount: 1134537086250983,
+      cErc20: ICErc20(0x71ef7EDa2Be775E5A7aa8afD02C45F059833e9d2),
+      cTokenCollateral: ICErc20(0x71ef7EDa2Be775E5A7aa8afD02C45F059833e9d2),
+      flashSwapContract: 0x468cC91dF6F669CaE6cdCE766995Bd7874052FBc,
+      minProfitAmount: 0,
+      redemptionStrategies: new IRedemptionStrategy[](0),
+      strategyData: new bytes[](0),
+      debtFundingStrategies: new IFundsConversionStrategy[](0),
+      debtFundingStrategiesData: new bytes[](0)
+    });
+
+    vm.mockCall(
+      expressRelay, 
+      abi.encodeWithSelector(bytes4(keccak256("isPermissioned(address,bytes)")), address(liquidatorV3), abi.encode(borrower)),
+      abi.encode(false)  
+    );
+    vm.expectRevert("invalid liquidation");
+    liquidatorV3.safeLiquidateToTokensWithFlashLoan(vars);
+
+    vm.mockCall(
+      expressRelay, 
+      abi.encodeWithSelector(bytes4(keccak256("isPermissioned(address,bytes)")), address(liquidatorV3), abi.encode(borrower)),
+      abi.encode(true)  
+    );
+    liquidatorV3.safeLiquidateToTokensWithFlashLoan(vars);
+
+    uint256 healthFactorAfter = lens.getHealthFactor(0x92eA6902C5023CC632e3Fd84dE7CcA6b98FE853d, pool);
+    emit log_named_uint("hf after", healthFactorAfter);
+  }
+
   // TODO test with marginal shortfall for liquidation penalty errors
   function _testLiquidatorLiquidate(address contractForFlashSwap) internal {
     IonicComptroller pool = IonicComptroller(poolAddress);
