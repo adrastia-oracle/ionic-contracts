@@ -1,11 +1,12 @@
 import { DeployFunction } from "hardhat-deploy/types";
 import { Address, encodeAbiParameters, encodeFunctionData, Hash, parseAbiParameters, zeroAddress } from "viem";
 
-import { logTransaction } from "../chainDeploy/helpers/logging";
+import { prepareAndLogTransaction } from "../chainDeploy/helpers/logging";
 
 const func: DeployFunction = async ({ viem, getNamedAccounts, deployments }) => {
   const { deployer, multisig } = await getNamedAccounts();
   const publicClient = await viem.getPublicClient();
+  const walletClient = await viem.getWalletClient(deployer as Address);
 
   const fuseFeeDistributor = await viem.getContractAt(
     "FeeDistributor",
@@ -64,14 +65,17 @@ const func: DeployFunction = async ({ viem, getNamedAccounts, deployments }) => 
     const erc20DelExtensions = await fuseFeeDistributor.read.getCErc20DelegateExtensions([erc20Del.address as Address]);
     if (erc20DelExtensions.length == 0 || erc20DelExtensions[0] != erc20Del.address) {
       if ((await fuseFeeDistributor.read.owner()).toLowerCase() !== deployer.toLowerCase()) {
-        logTransaction(
-          "Set CErc20Delegate Extensions",
-          encodeFunctionData({
-            abi: fuseFeeDistributor.abi,
-            functionName: "_setCErc20DelegateExtensions",
-            args: [erc20Del.address as Address, [erc20Del.address as Address, cTokenFirstExtension.address as Address]]
-          })
-        );
+        await prepareAndLogTransaction({
+          contractInstance: fuseFeeDistributor,
+          functionName: "_setCErc20DelegateExtensions",
+          args: [erc20Del.address as Address, [erc20Del.address as Address, cTokenFirstExtension.address as Address]],
+          description: "Set CErc20Delegate Extensions",
+          walletClient,
+          inputs: [
+            { internalType: "address", name: "cErc20Delegate", type: "address" },
+            { internalType: "address[]", name: "extensions", type: "address[]" }
+          ]
+        });
       } else {
         tx = await fuseFeeDistributor.write._setCErc20DelegateExtensions([
           erc20Del.address as Address,
@@ -86,14 +90,18 @@ const func: DeployFunction = async ({ viem, getNamedAccounts, deployments }) => 
     const [latestCErc20Delegate] = await fuseFeeDistributor.read.latestCErc20Delegate([1]);
     if (latestCErc20Delegate === zeroAddress || latestCErc20Delegate !== erc20Del.address) {
       if (multisig && (await fuseFeeDistributor.read.owner()).toLowerCase() !== deployer.toLowerCase()) {
-        logTransaction(
-          "Set Latest CErc20Delegate",
-          encodeFunctionData({
-            abi: fuseFeeDistributor.abi,
-            functionName: "_setLatestCErc20Delegate",
-            args: [1, erc20Del.address as Address, becomeImplementationData]
-          })
-        );
+        await prepareAndLogTransaction({
+          contractInstance: fuseFeeDistributor,
+          functionName: "_setLatestCErc20Delegate",
+          args: [1, erc20Del.address as Address, becomeImplementationData],
+          description: "Set Latest CErc20Delegate",
+          walletClient,
+          inputs: [
+            { internalType: "uint8", name: "delegateType", type: "uint8" },
+            { internalType: "address", name: "newImplementation", type: "address" },
+            { internalType: "bytes", name: "becomeImplementationData", type: "bytes" }
+          ]
+        });
       } else {
         tx = await fuseFeeDistributor.write._setLatestCErc20Delegate([
           1,
@@ -115,17 +123,20 @@ const func: DeployFunction = async ({ viem, getNamedAccounts, deployments }) => 
     ]);
     if (erc20PluginDelExtensions.length == 0 || erc20PluginDelExtensions[0] != erc20PluginDel.address) {
       if (multisig && (await fuseFeeDistributor.read.owner()).toLowerCase() !== deployer.toLowerCase()) {
-        logTransaction(
-          "Set CErc20PluginDelegate Extensions",
-          encodeFunctionData({
-            abi: fuseFeeDistributor.abi,
-            functionName: "_setCErc20DelegateExtensions",
-            args: [
-              erc20PluginDel.address as Address,
-              [erc20PluginDel.address as Address, cTokenFirstExtension.address as Address]
-            ]
-          })
-        );
+        await prepareAndLogTransaction({
+          contractInstance: fuseFeeDistributor,
+          functionName: "_setCErc20DelegateExtensions",
+          args: [
+            erc20PluginDel.address as Address,
+            [erc20PluginDel.address as Address, cTokenFirstExtension.address as Address]
+          ],
+          description: "Set CErc20PluginDelegate Extensions",
+          walletClient,
+          inputs: [
+            { internalType: "address", name: "cErc20Delegate", type: "address" },
+            { internalType: "address[]", name: "extensions", type: "address[]" }
+          ]
+        });
       } else {
         tx = await fuseFeeDistributor.write._setCErc20DelegateExtensions([
           erc20PluginDel.address as Address,
@@ -141,14 +152,18 @@ const func: DeployFunction = async ({ viem, getNamedAccounts, deployments }) => 
     const [latestCErc20PluginDelegate] = await fuseFeeDistributor.read.latestCErc20Delegate([2]);
     if (latestCErc20PluginDelegate === zeroAddress || latestCErc20PluginDelegate !== erc20PluginDel.address) {
       if (multisig && (await fuseFeeDistributor.read.owner()).toLowerCase() !== deployer.toLowerCase()) {
-        logTransaction(
-          "Set Latest CErc20PluginDelegate",
-          encodeFunctionData({
-            abi: fuseFeeDistributor.abi,
-            functionName: "_setLatestCErc20Delegate",
-            args: [2, erc20PluginDel.address as Address, becomeImplementationData]
-          })
-        );
+        await prepareAndLogTransaction({
+          contractInstance: fuseFeeDistributor,
+          functionName: "_setLatestCErc20Delegate",
+          args: [2, erc20PluginDel.address as Address, becomeImplementationData],
+          description: "Set Latest CErc20PluginDelegate",
+          walletClient,
+          inputs: [
+            { internalType: "uint8", name: "delegateType", type: "uint8" },
+            { internalType: "address", name: "newImplementation", type: "address" },
+            { internalType: "bytes", name: "becomeImplementationData", type: "bytes" }
+          ]
+        });
       } else {
         tx = await fuseFeeDistributor.write._setLatestCErc20Delegate([
           2,
@@ -172,17 +187,20 @@ const func: DeployFunction = async ({ viem, getNamedAccounts, deployments }) => 
     ]);
     if (erc20RewardsDelExtensions.length == 0 || erc20RewardsDelExtensions[0] != erc20RewardsDel.address) {
       if ((await fuseFeeDistributor.read.owner()).toLowerCase() !== deployer.toLowerCase()) {
-        logTransaction(
-          "Set CErc20RewardsDelegate Extensions",
-          encodeFunctionData({
-            abi: fuseFeeDistributor.abi,
-            functionName: "_setCErc20DelegateExtensions",
-            args: [
-              erc20RewardsDel.address as Address,
-              [erc20RewardsDel.address as Address, cTokenFirstExtension.address as Address]
-            ]
-          })
-        );
+        await prepareAndLogTransaction({
+          contractInstance: fuseFeeDistributor,
+          functionName: "_setCErc20DelegateExtensions",
+          args: [
+            erc20RewardsDel.address as Address,
+            [erc20RewardsDel.address as Address, cTokenFirstExtension.address as Address]
+          ],
+          description: "Set CErc20RewardsDelegate Extensions",
+          walletClient,
+          inputs: [
+            { internalType: "address", name: "cErc20Delegate", type: "address" },
+            { internalType: "address[]", name: "extensions", type: "address[]" }
+          ]
+        });
       } else {
         tx = await fuseFeeDistributor.write._setCErc20DelegateExtensions([
           erc20RewardsDel.address as Address,
@@ -197,14 +215,18 @@ const func: DeployFunction = async ({ viem, getNamedAccounts, deployments }) => 
     const [latestCErc20RewardsDelegate] = await fuseFeeDistributor.read.latestCErc20Delegate([3]);
     if (latestCErc20RewardsDelegate === zeroAddress || latestCErc20RewardsDelegate !== erc20RewardsDel.address) {
       if ((await fuseFeeDistributor.read.owner()).toLowerCase() !== deployer.toLowerCase()) {
-        logTransaction(
-          "Set Latest CErc20RewardsDelegate",
-          encodeFunctionData({
-            abi: fuseFeeDistributor.abi,
-            functionName: "_setLatestCErc20Delegate",
-            args: [3, erc20RewardsDel.address as Address, becomeImplementationData]
-          })
-        );
+        await prepareAndLogTransaction({
+          contractInstance: fuseFeeDistributor,
+          functionName: "_setLatestCErc20Delegate",
+          args: [3, erc20RewardsDel.address as Address, becomeImplementationData],
+          description: "Set Latest CErc20RewardsDelegate",
+          walletClient,
+          inputs: [
+            { internalType: "uint8", name: "delegateType", type: "uint8" },
+            { internalType: "address", name: "newImplementation", type: "address" },
+            { internalType: "bytes", name: "becomeImplementationData", type: "bytes" }
+          ]
+        });
       } else {
         tx = await fuseFeeDistributor.write._setLatestCErc20Delegate([
           3,
@@ -231,17 +253,20 @@ const func: DeployFunction = async ({ viem, getNamedAccounts, deployments }) => 
       erc20PluginRewardsDelExtensions[0] != erc20PluginRewardsDel.address
     ) {
       if ((await fuseFeeDistributor.read.owner()).toLowerCase() !== deployer.toLowerCase()) {
-        logTransaction(
-          "Set CErc20PluginRewardsDelegate Extensions",
-          encodeFunctionData({
-            abi: fuseFeeDistributor.abi,
-            functionName: "_setCErc20DelegateExtensions",
-            args: [
-              erc20PluginRewardsDel.address as Address,
-              [erc20PluginRewardsDel.address as Address, cTokenFirstExtension.address as Address]
-            ]
-          })
-        );
+        await prepareAndLogTransaction({
+          contractInstance: fuseFeeDistributor,
+          functionName: "_setCErc20DelegateExtensions",
+          args: [
+            erc20PluginRewardsDel.address as Address,
+            [erc20PluginRewardsDel.address as Address, cTokenFirstExtension.address as Address]
+          ],
+          description: "Set CErc20PluginRewardsDelegate Extensions",
+          walletClient,
+          inputs: [
+            { internalType: "address", name: "cErc20Delegate", type: "address" },
+            { internalType: "address[]", name: "extensions", type: "address[]" }
+          ]
+        });
       } else {
         tx = await fuseFeeDistributor.write._setCErc20DelegateExtensions([
           erc20PluginRewardsDel.address as Address,
@@ -259,14 +284,18 @@ const func: DeployFunction = async ({ viem, getNamedAccounts, deployments }) => 
       latestCErc20PluginRewardsDelegate !== erc20PluginRewardsDel.address
     ) {
       if ((await fuseFeeDistributor.read.owner()).toLowerCase() !== deployer.toLowerCase()) {
-        logTransaction(
-          "Set Latest CErc20PluginRewardsDelegate",
-          encodeFunctionData({
-            abi: fuseFeeDistributor.abi,
-            functionName: "_setLatestCErc20Delegate",
-            args: [4, erc20PluginRewardsDel.address as Address, becomeImplementationData]
-          })
-        );
+        await prepareAndLogTransaction({
+          contractInstance: fuseFeeDistributor,
+          functionName: "_setLatestCErc20Delegate",
+          args: [4, erc20PluginRewardsDel.address as Address, becomeImplementationData],
+          description: "Set Latest CErc20PluginRewardsDelegate",
+          walletClient,
+          inputs: [
+            { internalType: "uint8", name: "delegateType", type: "uint8" },
+            { internalType: "address", name: "newImplementation", type: "address" },
+            { internalType: "bytes", name: "becomeImplementationData", type: "bytes" }
+          ]
+        });
       } else {
         tx = await fuseFeeDistributor.write._setLatestCErc20Delegate([
           4,

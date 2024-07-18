@@ -1,5 +1,6 @@
 import { task, types } from "hardhat/config";
-import { Address, encodeAbiParameters, parseAbiParameters, publicActions, zeroAddress } from "viem";
+import { Address, encodeAbiParameters, parseAbiParameters, publicActions, zeroAddress , encodeFunctionData } from "viem";
+import { prepareAndLogTransaction } from "../../chainDeploy/helpers/logging";
 
 export default task("market:upgrade", "Upgrades a market's implementation")
   .addParam("comptroller", "address of comptroller", undefined, types.string) // TODO I would rather use id or comptroller address directly.
@@ -66,7 +67,9 @@ task("market:upgrade:safe", "Upgrades a market's implementation")
   .addParam("implementationAddress", "The address of the new implementation", "", types.string)
   .addOptionalParam("pluginAddress", "The address of plugin which is supposed to used", "", types.string)
   .addOptionalParam("signer", "Named account that is an admin of the pool", "deployer", types.string)
-  .setAction(async (taskArgs, { viem, deployments }) => {
+  .setAction(async (taskArgs, { viem, deployments, getNamedAccounts }) => {
+    const { deployer } = await getNamedAccounts();
+    const walletClient = await viem.getWalletClient(deployer as Address);
     const publicClient = await viem.getPublicClient();
     const { implementationAddress, marketAddress, signer: namedSigner } = taskArgs;
     let { pluginAddress } = taskArgs;
@@ -104,6 +107,19 @@ task("market:upgrade:safe", "Upgrades a market's implementation")
         throw `Failed set implementation to ${implementationAddress}`;
       }
       console.log(`Implementation successfully set to ${implementationAddress}`);
+
+      await prepareAndLogTransaction({
+        contractInstance: cTokenDelegator,
+        functionName: "_setImplementationSafe",
+        args: [implementationAddress, implementationData],
+        description: `Setting new implementation on ${cTokenDelegator.address}`,
+        walletClient,
+        inputs: [
+          { internalType: "address", name: "implementation_", type: "address" },
+          { internalType: "bytes", name: "implementationData", type: "bytes" }
+        ]
+      });
+
       if (pluginAddress != zeroAddress) {
         const cTokenPluginInstance = await viem.getContractAt("ICErc20Plugin", marketAddress);
         console.log(`with plugin ${await cTokenPluginInstance.read.plugin()}`);
@@ -117,8 +133,10 @@ task("market:upgrade:safe", "Upgrades a market's implementation")
 
 task("markets:upgrade-and-setup", "Upgrades all markets and sets addresses provider on them")
   .addFlag("forceUpgrade", "If the pool upgrade should be forced")
-  .setAction(async ({ forceUpgrade }, { viem, getChainId, deployments, run }) => {
+  .setAction(async ({ forceUpgrade }, { viem, getChainId, deployments, run, getNamedAccounts }) => {
+    const { deployer } = await getNamedAccounts();
     const publicClient = await viem.getPublicClient();
+    const walletClient = await viem.getWalletClient(deployer as Address);
 
     const poolDirectory = await viem.getContractAt(
       "PoolDirectory",
@@ -133,14 +151,21 @@ task("markets:upgrade-and-setup", "Upgrades all markets and sets addresses provi
       "AddressesProvider",
       (await deployments.get("AddressesProvider")).address as Address
     );
-    const setIDTX = await addressProvider.write.setAddress("PoolLens", (await deployments.get("PoolLens")).address);
-    const receipt = await publicClient.waitForTransactionReceipt({
-      hash: setIDTX
+    
+    await prepareAndLogTransaction({
+      contractInstance: addressProvider,
+      functionName: "setAddress",
+      args: [
+        "PoolLens",
+        (await deployments.get("PoolLens")).address as Address
+      ],
+      description: `Setting PoolLens id on AddressProvider`,
+      walletClient,
+      inputs: [
+        { internalType: "string", name: "id", type: "string" },
+        { internalType: "address", name: "newAddress", type: "address" }
+      ]
     });
-    if (receipt.status !== "success") {
-      throw `Failed to set PoolLens id`;
-    }
-    console.log(`PoolLens id successfully set`);
 
     const [, pools] = await poolDirectory.read.getActivePools();
     for (let i = 0; i < pools.length; i++) {
@@ -166,14 +191,17 @@ task("markets:upgrade-and-setup", "Upgrades all markets and sets addresses provi
             (await deployments.get("AddressesProvider")).address as Address
           );
           const ctokenAsExt = await viem.getContractAt("CTokenFirstExtension", market)
-          const setAPTX = await ctokenAsExt.write._setAddressesProvider(ap);
-          const receipt = await publicClient.waitForTransactionReceipt({
-            hash: setAPTX
+
+          await prepareAndLogTransaction({
+            contractInstance: ctokenAsExt,
+            functionName: "_setAddressesProvider",
+            args: [ap.address],
+            description: `Setting AddressesProvider on ${market}`,
+            walletClient,
+            inputs: [
+              { internalType: "address", name: "_ap", type: "address" }
+            ]
           });
-          if (receipt.status !== "success") {
-            throw `Failed to set AddressesProvider`;
-          }
-          console.log(`AddressesProvider successfully set to ${ap}`);
         }
       } catch (e) {
         console.error(`error while upgrading the pool ${JSON.stringify(pool)}`, e);
