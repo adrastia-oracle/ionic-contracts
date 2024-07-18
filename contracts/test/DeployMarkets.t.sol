@@ -6,10 +6,10 @@ import "forge-std/Test.sol";
 import { ERC20 } from "solmate/tokens/ERC20.sol";
 import { Auth, Authority } from "solmate/auth/Auth.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
-import { FuseFlywheelDynamicRewardsPlugin } from "fuse-flywheel/rewards/FuseFlywheelDynamicRewardsPlugin.sol";
+import { IonicFlywheelDynamicRewardsPlugin } from "../ionic/strategies/flywheel/rewards/IonicFlywheelDynamicRewardsPlugin.sol";
 import { FlywheelCore } from "flywheel/FlywheelCore.sol";
-import { IFlywheelBooster } from "flywheel/interfaces/IFlywheelBooster.sol";
-import { IFlywheelRewards } from "flywheel/interfaces/IFlywheelRewards.sol";
+import { IFlywheelBooster } from "../ionic/strategies/flywheel/IFlywheelBooster.sol";
+import { IFlywheelRewards } from "../ionic/strategies/flywheel/rewards/IFlywheelRewards.sol";
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import { ICErc20, ICErc20Plugin, ICErc20PluginRewards } from "../compound/CTokenInterfaces.sol";
@@ -51,7 +51,7 @@ contract DeployMarketsTest is Test {
   FeeDistributor ionicAdmin;
   PoolDirectory poolDirectory;
 
-  FuseFlywheelDynamicRewardsPlugin rewards;
+  IonicFlywheelDynamicRewardsPlugin rewards;
 
   address[] markets;
   bool[] t;
@@ -213,8 +213,8 @@ contract DeployMarketsTest is Test {
     TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(address(impl), address(1), "");
     IonicFlywheelCore flywheel = IonicFlywheelCore(address(proxy));
     flywheel.initialize(underlyingToken, IFlywheelRewards(address(0)), IFlywheelBooster(address(0)), address(this));
-    FlywheelCore asFlywheelCore = FlywheelCore(address(flywheel));
-    rewards = new FuseFlywheelDynamicRewardsPlugin(asFlywheelCore, 1);
+    IonicFlywheelCore asFlywheelCore = IonicFlywheelCore(address(flywheel));
+    rewards = new IonicFlywheelDynamicRewardsPlugin(asFlywheelCore, 1);
     flywheel.setFlywheelRewards(rewards);
 
     mockERC4626Dynamic = new MockERC4626Dynamic(ERC20(address(underlyingToken)), asFlywheelCore);
