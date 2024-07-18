@@ -6,12 +6,6 @@ interface PrepareAndLogTransactionParams {
   functionName: string;
   args: any[];
   description: string;
-  walletClient: any;
-  inputs: {
-    internalType: string;
-    name: string;
-    type: string;
-  }[];
 }
 
 export const logTransaction = (description: string, data: string) => {
