@@ -1,5 +1,5 @@
 import { DeployFunction } from "hardhat-deploy/types";
-import { Address, encodeAbiParameters, encodeFunctionData, Hash, parseAbiParameters, zeroAddress } from "viem";
+import { Address, encodeAbiParameters, Hash, parseAbiParameters, zeroAddress } from "viem";
 
 import { prepareAndLogTransaction } from "../chainDeploy/helpers/logging";
 

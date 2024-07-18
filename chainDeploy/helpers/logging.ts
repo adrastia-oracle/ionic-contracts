@@ -1,4 +1,4 @@
-import { encodeFunctionData } from "@viem/utils"; // Adjust the import path according to your project structure
+import { encodeFunctionData } from "viem"; // Adjust the import path according to your project structure
 import { promises as fs } from "fs";
 
 interface PrepareAndLogTransactionParams {
@@ -29,7 +29,7 @@ export const addTransaction = async (tx: any) => {
 const writeSingleTransactionToFile = async (tx: any) => {
   const filePath = "./transactions.json";
   try {
-    const fileContent = await fs.readFile(filePath, 'utf8');
+    const fileContent = await fs.readFile(filePath, "utf8");
     const batch = JSON.parse(fileContent);
 
     batch.transactions.push(tx);
@@ -37,7 +37,7 @@ const writeSingleTransactionToFile = async (tx: any) => {
     await fs.writeFile(filePath, JSON.stringify(batch, null, 2));
     console.log(`Transaction added and written to ${filePath}`);
   } catch (error) {
-    if (error.code === 'ENOENT') {
+    if (error.code === "ENOENT") {
       const batch = {
         version: "1.0",
         chainId: "34443",
