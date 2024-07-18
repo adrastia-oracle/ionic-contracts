@@ -65,37 +65,24 @@ export const prepareAndLogTransaction = async ({
   contractInstance,
   functionName,
   args,
-  description,
-  walletClient,
-  inputs
+  description
 }: PrepareAndLogTransactionParams) => {
-  const account = await contractInstance.read.owner();
-  const to = contractInstance.address;
   const data = encodeFunctionData({
     abi: contractInstance.abi,
     functionName,
     args
   });
 
-  const tx = await walletClient.prepareTransactionRequest({
-    account,
-    to,
-    data
-  });
-
   addTransaction({
-    to: tx.to,
-    value: tx.value ? tx.value.toString() : "0",
-    data: null,
-    contractMethod: {
-      inputs,
-      name: functionName,
-      payable: false
-    },
-    contractInputsValues: args.reduce((acc: any, arg: any, index: number) => {
-      acc[inputs[index].name] = arg;
-      return acc;
-    }, {})
+    to: contractInstance.address,
+    value: "0",
+    data: encodeFunctionData({
+      abi: contractInstance.abi,
+      functionName,
+      args
+    }),
+    contractMethod: null,
+    contractInputsValues: null
   });
 
   logTransaction(description, data);
