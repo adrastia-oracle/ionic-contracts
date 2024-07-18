@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.10;
 
-import { FlywheelDynamicRewards } from "flywheel-v2/rewards/FlywheelDynamicRewards.sol";
-import { FlywheelCore } from "flywheel-v2/FlywheelCore.sol";
+import { FlywheelDynamicRewards } from "./FlywheelDynamicRewards.sol";
+import { IonicFlywheelCore } from "../IonicFlywheelCore.sol";
 import { SafeTransferLib, ERC20 } from "solmate/utils/SafeTransferLib.sol";
 
 interface ICERC20 {
@@ -16,7 +16,7 @@ interface IPlugin {
 contract IonicFlywheelDynamicRewards is FlywheelDynamicRewards {
   using SafeTransferLib for ERC20;
 
-  constructor(FlywheelCore _flywheel, uint32 _cycleLength) FlywheelDynamicRewards(_flywheel, _cycleLength) {}
+  constructor(IonicFlywheelCore _flywheel, uint32 _cycleLength) FlywheelDynamicRewards(_flywheel, _cycleLength) {}
 
   function getNextCycleRewards(ERC20 strategy) internal override returns (uint192) {
     // make it work for both pulled (claimed) and pushed (transferred some other way) rewards
