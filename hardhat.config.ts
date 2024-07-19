@@ -11,7 +11,10 @@ dotenv();
 
 const config: HardhatUserConfig = {
   namedAccounts: {
-    deployer: { default: 0 }
+    deployer: { default: 0 },
+    multisig: {
+      34443: "0x8Fba84867Ba458E7c6E2c024D2DE3d0b5C3ea1C2"
+    }
   },
   solidity: {
     compilers: [
