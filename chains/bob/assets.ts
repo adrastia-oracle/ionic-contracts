@@ -19,7 +19,7 @@ export const assets: SupportedAsset[] = [
     oracle: OracleTypes.FixedNativePriceOracle,
     initialSupplyCap: parseEther(String(3_000)).toString(),
     initialBorrowCap: parseEther("0.01").toString(),
-    initialCf: "85"
+    initialCf: "0.85"
   },
   {
     symbol: assetSymbols.WBTC,
@@ -33,7 +33,7 @@ export const assets: SupportedAsset[] = [
     } as ChainlinkSpecificParams,
     initialSupplyCap: parseUnits(String(100), 8).toString(),
     initialBorrowCap: parseUnits("0.00001", 8).toString(),
-    initialCf: "85"
+    initialCf: "0.85"
   },
   {
     symbol: assetSymbols.USDT,
@@ -47,7 +47,7 @@ export const assets: SupportedAsset[] = [
     } as ChainlinkSpecificParams,
     initialSupplyCap: parseUnits(String(10_000_000), 6).toString(),
     initialBorrowCap: parseUnits(String(30), 6).toString(),
-    initialCf: "85"
+    initialCf: "0.85"
   },
   {
     symbol: assetSymbols.tBTC,
@@ -61,7 +61,7 @@ export const assets: SupportedAsset[] = [
     } as ChainlinkSpecificParams,
     initialSupplyCap: parseUnits(String(100), 18).toString(),
     initialBorrowCap: parseUnits("0.00001", 18).toString(),
-    initialCf: "85"
+    initialCf: "0.85"
   },
   {
     symbol: assetSymbols.USDC,
@@ -75,7 +75,7 @@ export const assets: SupportedAsset[] = [
     } as ChainlinkSpecificParams,
     initialSupplyCap: parseUnits(String(10_000_000), 6).toString(),
     initialBorrowCap: parseUnits(String(30), 6).toString(),
-    initialCf: "85"
+    initialCf: "0.85"
   },
   {
     symbol: assetSymbols.SOV,
@@ -89,7 +89,7 @@ export const assets: SupportedAsset[] = [
     } as ChainlinkSpecificParams,
     initialSupplyCap: parseUnits(String(20_000_000), 18).toString(),
     initialBorrowCap: parseUnits(String(69), 18).toString(),
-    initialCf: "45"
+    initialCf: "0.45"
   }
 ];
 
