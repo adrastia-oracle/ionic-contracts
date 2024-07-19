@@ -5,3 +5,4 @@ import "./irm";
 import "./leverage/configurePair";
 import "./plugin";
 import "./pool";
+import "./market";

@@ -26,6 +26,14 @@ const config: HardhatUserConfig = {
       }
     ]
   },
+  external: {
+    contracts: [{ artifacts: "./out" }]
+  },
+  paths: {
+    sources: "./contracts",
+    tests: "./contracts/test",
+    artifacts: "./out"
+  },
   networks: {
     local: {
       accounts: [process.env.DEPLOYER!],

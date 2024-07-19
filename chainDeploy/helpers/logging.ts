@@ -6,6 +6,11 @@ interface PrepareAndLogTransactionParams {
   functionName: string;
   args: any[];
   description: string;
+  inputs: {
+    internalType: string;
+    name: string;
+    type: string;
+  }[];
 }
 
 export const logTransaction = (description: string, data: string) => {
@@ -23,35 +28,37 @@ export const addTransaction = async (tx: any) => {
 const writeSingleTransactionToFile = async (tx: any) => {
   const filePath = "./transactions.json";
   try {
-    const fileContent = await fs.readFile(filePath, "utf8");
-    const batch = JSON.parse(fileContent);
+    let batch;
+    try {
+      const fileContent = await fs.readFile(filePath, "utf8");
+      batch = JSON.parse(fileContent);
+    } catch (error) {
+      if (error.code === "ENOENT" || error.message === "Unexpected end of JSON input") {
+        batch = {
+          version: "1.0",
+          chainId: "34443",
+          createdAt: Math.floor(Date.now() / 1000),
+          meta: {
+            name: "Transactions Batch",
+            description: "",
+            txBuilderVersion: "1.16.5",
+            createdFromSafeAddress: "0x8Fba84867Ba458E7c6E2c024D2DE3d0b5C3ea1C2",
+            createdFromOwnerAddress: "",
+            checksum: "0x"
+          },
+          transactions: []
+        };
+      } else {
+        throw error;
+      }
+    }
 
     batch.transactions.push(tx);
 
     await fs.writeFile(filePath, JSON.stringify(batch, null, 2));
     console.log(`Transaction added and written to ${filePath}`);
   } catch (error) {
-    if (error.code === "ENOENT") {
-      const batch = {
-        version: "1.0",
-        chainId: "34443",
-        createdAt: Math.floor(Date.now() / 1000),
-        meta: {
-          name: "Transactions Batch",
-          description: "",
-          txBuilderVersion: "1.16.5",
-          createdFromSafeAddress: "0x8Fba84867Ba458E7c6E2c024D2DE3d0b5C3ea1C2",
-          createdFromOwnerAddress: "",
-          checksum: "0x"
-        },
-        transactions: [tx]
-      };
-
-      await fs.writeFile(filePath, JSON.stringify(batch, null, 2));
-      console.log(`Transaction added and file created at ${filePath}`);
-    } else {
-      console.error(`Failed to write transaction to ${filePath}`, error);
-    }
+    console.error(`Failed to write transaction to ${filePath}`, error);
   }
 };
 
@@ -59,7 +66,8 @@ export const prepareAndLogTransaction = async ({
   contractInstance,
   functionName,
   args,
-  description
+  description,
+  inputs
 }: PrepareAndLogTransactionParams) => {
   const data = encodeFunctionData({
     abi: contractInstance.abi,
@@ -67,16 +75,19 @@ export const prepareAndLogTransaction = async ({
     args
   });
 
-  addTransaction({
+  await addTransaction({
     to: contractInstance.address,
     value: "0",
-    data: encodeFunctionData({
-      abi: contractInstance.abi,
-      functionName,
-      args
-    }),
-    contractMethod: null,
-    contractInputsValues: null
+    data,
+    contractMethod: {
+      inputs,
+      name: functionName,
+      payable: false
+    },
+    contractInputsValues: args.reduce((acc: any, arg: any, index: number) => {
+      acc[inputs[index].name] = arg;
+      return acc;
+    }, {})
   });
 
   logTransaction(description, data);
