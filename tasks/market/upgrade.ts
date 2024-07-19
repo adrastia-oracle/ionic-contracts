@@ -95,25 +95,12 @@ task("market:upgrade:safe", "Upgrades a market's implementation")
       const implementationData = encodeAbiParameters(parseAbiParameters("address"), [pluginAddress]);
 
       console.log(`Setting implementation to ${implementationAddress} with plugin ${pluginAddress}`);
-      const setImplementationTx = await cTokenDelegator.write._setImplementationSafe([
-        implementationAddress,
-        implementationData
-      ]);
-
-      const receipt = await publicClient.waitForTransactionReceipt({
-        hash: setImplementationTx
-      });
-      if (receipt.status !== "success") {
-        throw `Failed set implementation to ${implementationAddress}`;
-      }
-      console.log(`Implementation successfully set to ${implementationAddress}`);
 
       await prepareAndLogTransaction({
         contractInstance: cTokenDelegator,
         functionName: "_setImplementationSafe",
         args: [implementationAddress, implementationData],
         description: `Setting new implementation on ${cTokenDelegator.address}`,
-        walletClient,
         inputs: [
           { internalType: "address", name: "implementation_", type: "address" },
           { internalType: "bytes", name: "implementationData", type: "bytes" }
@@ -151,6 +138,23 @@ task("markets:upgrade-and-setup", "Upgrades all markets and sets addresses provi
       "AddressesProvider",
       (await deployments.get("AddressesProvider")).address as Address
     );
+
+    const ionicUniV3Liquidator = await viem.getContractAt(
+      "IonicUniV3Liquidator",
+      (await deployments.get("IonicUniV3Liquidator")).address as Address
+    );
+
+    await prepareAndLogTransaction({
+      contractInstance: ionicUniV3Liquidator,
+      functionName: "setHealthFactorThreshold",
+      args: [
+        BigInt("990000000000000000").toString() // 0.99e18 as a BigInt
+      ],
+      description: `Setting Liquidator Health Factor Threshold`,
+      inputs: [
+        { internalType: "uint256", name: "_healthFactorThreshold", type: "uint256" }
+      ]
+    });
     
     await prepareAndLogTransaction({
       contractInstance: addressProvider,
@@ -160,7 +164,6 @@ task("markets:upgrade-and-setup", "Upgrades all markets and sets addresses provi
         (await deployments.get("PoolLens")).address as Address
       ],
       description: `Setting PoolLens id on AddressProvider`,
-      walletClient,
       inputs: [
         { internalType: "string", name: "id", type: "string" },
         { internalType: "address", name: "newAddress", type: "address" }
@@ -197,7 +200,6 @@ task("markets:upgrade-and-setup", "Upgrades all markets and sets addresses provi
             functionName: "_setAddressesProvider",
             args: [ap.address],
             description: `Setting AddressesProvider on ${market}`,
-            walletClient,
             inputs: [
               { internalType: "address", name: "_ap", type: "address" }
             ]
