@@ -8,7 +8,7 @@ import "./ICToken.sol";
  * @notice CTokens which wrap an EIP-20 underlying
  * @author Compound
  */
-interface ICErc20 is ICToken {
+interface ICErc20Compound is ICToken {
   function underlying() external view returns (address);
 
   function liquidateBorrow(

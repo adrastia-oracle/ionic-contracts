@@ -13,3 +13,5 @@ deployments/kovan/
 contracts.iml
 node_modules/
 ionic-contracts.iml
+cache_hardhat
+transactions.json

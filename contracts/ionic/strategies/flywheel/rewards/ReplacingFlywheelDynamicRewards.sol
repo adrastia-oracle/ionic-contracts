@@ -7,7 +7,7 @@ import { FlywheelCore } from "flywheel-v2/FlywheelCore.sol";
 import { Auth, Authority } from "solmate/auth/Auth.sol";
 import { SafeTransferLib, ERC20 } from "solmate/utils/SafeTransferLib.sol";
 
-interface ICERC20 {
+interface ICERC20_RFDR {
   function plugin() external returns (address);
 }
 
@@ -34,7 +34,7 @@ contract ReplacingFlywheelDynamicRewards is FlywheelDynamicRewards {
       return 0;
     } else {
       // make it work for both pulled (claimed) and pushed (transferred some other way) rewards
-      try ICERC20(address(strategy)).plugin() returns (address plugin) {
+      try ICERC20_RFDR(address(strategy)).plugin() returns (address plugin) {
         try IPlugin(plugin).claimRewards() {} catch {}
       } catch {}
 
