@@ -46,7 +46,7 @@ task("market:base:rsr-ion-rewards", "Sets caps on a market").setAction(
 
     const flywheelBorrow = await viem.getContractAt(
       "IonicFlywheelBorrow",
-      (await deployments.get("IonicFlywheelBorrow_ION")).address as Address
+      (await deployments.get("IonicFlywheelBorrow_Borrow_ION")).address as Address
     );
     await run("approve-market-flywheel", { fwAddress: flywheelBorrow.address, markets: markets });
 
