@@ -37,7 +37,7 @@ const func: DeployFunction = async ({ run, viem, getNamedAccounts, deployments }
   const tx = await flywheel.write.updateFeeSettings([0, deployer.address]);
   await publicClient.waitForTransactionReceipt({ hash: tx });
   */
-  const booster = await run("flywheel:deploy-borrow-booster", { name: "Booster" });
+  await run("flywheel:deploy-borrow-booster", { name: "Booster" });
 
   // NOTE: change name and reward token
   await run("flywheel:deploy-dynamic-rewards-fw", {

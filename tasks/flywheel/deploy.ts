@@ -1,3 +1,4 @@
+import { viem } from "hardhat";
 import { task, types } from "hardhat/config";
 import { Address, getAddress, zeroAddress } from "viem";
 
@@ -54,7 +55,8 @@ task("flywheel:deploy-static-rewards-fw", "Deploy static rewards flywheel for LM
 task("flywheel:deploy-static-rewards", "Deploy static rewards flywheel for LM rewards")
   .addParam("name", "String to append to the flywheel contract name", undefined, types.string)
   .addParam("flywheel", "flywheel to which to add the rewards contract", undefined, types.string)
-  .setAction(async ({ signer, name, flywheel }, { viem, deployments, getNamedAccounts }) => {
+  .setAction(async ({ name, flywheel }, { viem, deployments, getNamedAccounts }) => {
+    const publicClient = await viem.getPublicClient();
     const { deployer } = await getNamedAccounts();
     const rewards = await deployments.deploy(`WithdrawableFlywheelStaticRewards_${name}`, {
       contract: "WithdrawableFlywheelStaticRewards",
@@ -68,11 +70,9 @@ task("flywheel:deploy-static-rewards", "Deploy static rewards flywheel for LM re
       waitConfirmations: 1
     });
 
-    const ionicSdkModule = await import("../ionicSdk");
-    const sdk = await ionicSdkModule.getOrCreateIonic(deployer);
-
-    const tx = await sdk.setFlywheelRewards(flywheel, rewards.address);
-    await tx.wait();
+    const flywheelContract = await viem.getContractAt("IonicFlywheel", flywheel);
+    const tx = await flywheelContract.write.setFlywheelRewards([rewards.address as Address]);
+    await publicClient.waitForTransactionReceipt({ hash: tx });
     return rewards;
   });
 
@@ -143,13 +143,11 @@ task("flywheel:deploy-dynamic-rewards-fw", "Deploy dynamic rewards flywheel for 
       let contractName;
       if (booster != "") {
         flywheelBooster = await viem.getContractAt(booster, (await deployments.get(booster)).address as Address);
-      }
-      else flywheelBooster = zeroAddress;
+      } else flywheelBooster = zeroAddress;
 
       if (name.includes("Borrow")) {
         contractName = "IonicFlywheelBorrow";
-      }
-      else contractName = "IonicFlywheel"
+      } else contractName = "IonicFlywheel";
 
       console.log({ signer, name, rewardToken, booster, strategies, pool });
       const flywheel = await deployments.deploy(`${contractName}_${name}`, {
@@ -191,7 +189,8 @@ task("flywheel:deploy-dynamic-rewards-fw", "Deploy dynamic rewards flywheel for 
 task("flywheel:deploy-dynamic-rewards", "Deploy dynamic rewards flywheel for LM rewards")
   .addParam("name", "String to append to the flywheel contract name", undefined, types.string)
   .addParam("flywheel", "flywheel to which to add the rewards contract", undefined, types.string)
-  .setAction(async ({ name, flywheel }, { deployments, getNamedAccounts }) => {
+  .setAction(async ({ name, flywheel }, { viem, deployments, getNamedAccounts }) => {
+    const publicClient = await viem.getPublicClient();
     const { deployer } = await getNamedAccounts();
     const rewards = await deployments.deploy(`IonicFlywheelDynamicRewards_${name}`, {
       contract: "IonicFlywheelDynamicRewards",
@@ -203,12 +202,9 @@ task("flywheel:deploy-dynamic-rewards", "Deploy dynamic rewards flywheel for LM 
       ],
       waitConfirmations: 1
     });
-
-    const ionicSdkModule = await import("../ionicSdk");
-    const sdk = await ionicSdkModule.getOrCreateIonic(deployer);
-
-    const tx = await sdk.setFlywheelRewards(flywheel, rewards.address);
-    await tx.wait();
+    const flywheelContract = await viem.getContractAt("IonicFlywheel", flywheel);
+    const tx = await flywheelContract.write.setFlywheelRewards([rewards.address as Address]);
+    await publicClient.waitForTransactionReceipt({ hash: tx });
     return rewards;
   });
 
