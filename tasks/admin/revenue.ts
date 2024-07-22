@@ -201,14 +201,11 @@ task("revenue:flywheels:calculate", "Calculate the fees accrued from 4626 Perfor
   }
 );
 
-task("revenue:all:calculate", "Calculate the fees accrued from 4626 Performance Fees").setAction(
-  async (taskArgs, hre) => {
-    const pluginFees = await hre.run("revenue:4626:calculate");
-    const adminFees = await hre.run("revenue:admin:calculate");
-    const flywheelFees = await hre.run("revenue:flywheels:calculate");
-    console.log(`Total Fees: ${formatEther(pluginFees + adminFees + flywheelFees)}`);
-  }
-);
+task("revenue:all:calculate", "Calculate the fees accrued from 4626 Performance Fees").setAction(async (_, hre) => {
+  const adminFees = await hre.run("revenue:admin:calculate");
+  const flywheelFees = await hre.run("revenue:flywheels:calculate");
+  console.log(`Total Fees: ${formatEther(adminFees + flywheelFees)}`);
+});
 
 task("revenue:admin:withdraw", "Calculate the fees accrued from admin fees")
   .addParam("signer", "The address of the current deployer", "deployer", types.string)
