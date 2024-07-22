@@ -142,7 +142,10 @@ task("flywheel:deploy-dynamic-rewards-fw", "Deploy dynamic rewards flywheel for 
       let flywheelBooster;
       let contractName;
       if (booster != "") {
-        flywheelBooster = await viem.getContractAt(booster, (await deployments.get(booster)).address as Address);
+        flywheelBooster = await viem.getContractAt(
+          "IonicFlywheelBorrowBooster",
+          (await deployments.get(booster)).address as Address
+        );
       } else flywheelBooster = zeroAddress;
 
       if (name.includes("Borrow")) {

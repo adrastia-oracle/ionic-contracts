@@ -15,8 +15,14 @@ task("market:base:rsr-ion-rewards", "Sets caps on a market").setAction(
     const markets = `${ionbsdETH},${ioneUSD}`;
 
     const ionToken = await viem.getContractAt("EIP20Interface", IONIC);
-    await ionToken.write.transfer([ionbsdETH, parseEther("105263.157895")]);
-    await ionToken.write.transfer([ioneUSD, parseEther("114416.475973")]);
+    const balance = await ionToken.read.balanceOf([ionbsdETH]);
+    if (balance < parseEther("105263.157895")) {
+      await ionToken.write.transfer([ionbsdETH, parseEther("105263.157895")]);
+    }
+    const balanceUSD = await ionToken.read.balanceOf([ioneUSD]);
+    if (balanceUSD < parseEther("114416.475973")) {
+      await ionToken.write.transfer([ioneUSD, parseEther("114416.475973")]);
+    }
 
     /*
   // NOTE: change name and reward token
@@ -34,7 +40,7 @@ task("market:base:rsr-ion-rewards", "Sets caps on a market").setAction(
     await run("flywheel:deploy-dynamic-rewards-fw", {
       name: "Borrow_ION",
       rewardToken: IONIC,
-      booster: "IonicFlywheelBorrowBooster",
+      booster: "IonicFlywheelBorrowBooster_ION",
       strategies: markets,
       pool
     });
