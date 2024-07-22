@@ -1,5 +1,5 @@
 import { task } from "hardhat/config";
-import { Address, parseEther } from "viem";
+import { Address, parseEther, zeroAddress } from "viem";
 
 task("market:base:rsr-ion-rewards", "Sets caps on a market").setAction(
   async (_, { viem, run, deployments, getNamedAccounts }) => {
@@ -12,7 +12,28 @@ task("market:base:rsr-ion-rewards", "Sets caps on a market").setAction(
     const ioneUSD = "0x9c2a4f9c5471fd36be3bbd8437a33935107215a1";
     const IONIC = "0x3eE5e23eEE121094f1cFc0Ccc79d6C809Ebd22e5";
     const pool = "0x05c9C6417F246600f8f5f49fcA9Ee991bfF73D13";
+    const comptroller = "0x2b3A2c76D57850FD4018B97dCCC8849bBD54C35c";
     const markets = `${ionbsdETH},${ioneUSD}`;
+
+
+    // STEP 1: upgrade markets to the new implementation
+    console.log(`Upgrading market: ${underlyingAddress} to CErc20PluginRewardsDelegate with plugin: ${pluginAddress}`);
+    await run("market:upgrade", {
+      comptroller,
+      underlying: ionbsdETH,
+      implementationAddress: (await deployments.get("CErc20PluginRewardsDelegate")).address,
+      pluginAddress: zeroAddress,
+      signer: deployer.address
+    });
+
+    await run("market:upgrade", {
+      comptroller,
+      underlying: ioneUSD,
+      implementationAddress: (await deployments.get("CErc20PluginRewardsDelegate")).address,
+      pluginAddress: zeroAddress,
+      signer: deployer.address
+    });
+    console.log("Market upgraded");
 
     const ionToken = await viem.getContractAt("EIP20Interface", IONIC);
     const balance = await ionToken.read.balanceOf([ionbsdETH]);
