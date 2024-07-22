@@ -97,7 +97,7 @@ task("flywheel:add-strategy-for-rewards", "Create pool if does not exist")
       throw `Invalid 'strategy': ${taskArgs.strategy}`;
     }
 
-    const flywheel = await viem.getContractAt(`${name}`, flywheelAddress);
+    const flywheel = await viem.getContractAt(`IonicFlywheelBorrow`, flywheelAddress);
     const addTx = await flywheel.write.addStrategyForRewards([strategyAddress]);
     await publicClient.waitForTransactionReceipt({ hash: addTx });
     console.log(addTx);
