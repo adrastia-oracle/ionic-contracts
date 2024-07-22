@@ -80,6 +80,7 @@ task("flywheel:add-strategy-for-rewards", "Create pool if does not exist")
   .addParam("signer", "Named account to use fo tx", "deployer", types.string)
   .addParam("flywheel", "address of flywheel", undefined, types.string)
   .addParam("strategy", "address of strategy", undefined, types.string)
+  .addParam("name", "flywheel contract name", undefined, types.string)
   .setAction(async (taskArgs, { viem }) => {
     const publicClient = await viem.getPublicClient();
     let flywheelAddress, strategyAddress;
@@ -96,7 +97,7 @@ task("flywheel:add-strategy-for-rewards", "Create pool if does not exist")
       throw `Invalid 'strategy': ${taskArgs.strategy}`;
     }
 
-    const flywheel = await viem.getContractAt("IonicFlywheel", flywheelAddress);
+    const flywheel = await viem.getContractAt(`${name}`, flywheelAddress);
     const addTx = await flywheel.write.addStrategyForRewards([strategyAddress]);
     await publicClient.waitForTransactionReceipt({ hash: addTx });
     console.log(addTx);
@@ -177,7 +178,7 @@ task("flywheel:deploy-dynamic-rewards-fw", "Deploy dynamic rewards flywheel for 
       const strategyAddresses = strategies.split(",");
       for (const strategy of strategyAddresses) {
         console.log(`Adding strategy ${strategy} to flywheel ${flywheel.address}`);
-        await run("flywheel:add-strategy-for-rewards", { flywheel: flywheel.address, strategy });
+        await run("flywheel:add-strategy-for-rewards", { flywheel: flywheel.address, strategy, name: `${contractName}_${name}` });
         console.log(`Added strategy (${strategy}) to flywheel (${flywheel.address})`);
       }
       await run("flywheel:add-to-pool", { flywheel: flywheel.address, pool });
