@@ -35,7 +35,6 @@ task("market:base:rsr-ion-rewards", "Sets caps on a market").setAction(
   await publicClient.waitForTransactionReceipt({ hash: tx });
   */
     await run("flywheel:deploy-borrow-booster", { name: "ION" });
-
     // NOTE: change name and reward token
     await run("flywheel:deploy-dynamic-rewards-fw", {
       name: "Borrow_ION",
@@ -47,7 +46,7 @@ task("market:base:rsr-ion-rewards", "Sets caps on a market").setAction(
 
     const flywheelBorrow = await viem.getContractAt(
       "IonicFlywheelBorrow",
-      (await deployments.get("IonicFlywheelBorrow")).address as Address
+      (await deployments.get("IonicFlywheelBorrow_ION")).address as Address
     );
     await run("approve-market-flywheel", { fwAddress: flywheelBorrow.address, markets: markets });
 
