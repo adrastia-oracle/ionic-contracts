@@ -33,19 +33,19 @@ const config: HardhatUserConfig = {
       saveDeployments: false
     },
     mode: {
-      url: "https://mainnet.mode.network",
+      url: process.env.OVERRIDE_RPC_URL ?? "https://mainnet.mode.network",
       accounts: [process.env.DEPLOYER!]
     },
     base: {
-      url: "https://mainnet.base.org",
+      url: process.env.OVERRIDE_RPC_URL ?? "https://mainnet.base.org",
       accounts: [process.env.DEPLOYER!]
     },
     optimism: {
-      url: "https://mainnet.optimism.io",
+      url: process.env.OVERRIDE_RPC_URL ?? "https://mainnet.optimism.io",
       accounts: [process.env.DEPLOYER!]
     },
     bob: {
-      url: "https://rpc.gobob.xyz",
+      url: process.env.OVERRIDE_RPC_URL ?? "https://rpc.gobob.xyz",
       accounts: [process.env.DEPLOYER!]
     }
   }
