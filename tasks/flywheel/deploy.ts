@@ -123,13 +123,15 @@ task("flywheel:add-to-pool", "Create pool if does not exist")
       throw `Invalid 'pool': ${taskArgs.pool}`;
     }
 
-    const comptroller = await viem.getContractAt("Comptroller", poolAddress);
+    const comptroller = await viem.getContractAt("IonicComptroller", poolAddress);
     const rewardsDistributors = (await comptroller.read.getRewardsDistributors()) as Address[];
     if (!rewardsDistributors.map((s) => s.toLowerCase()).includes(flywheelAddress.toLowerCase())) {
       const addTx = await comptroller.write._addRewardsDistributor([flywheelAddress]);
+      await publicClient.waitForTransactionReceipt({ hash: addTx });
+      console.log({ addTx });
+    } else {
+      console.log(`Flywheel ${flywheelAddress} already added to pool ${poolAddress}`);
     }
-    await publicClient.waitForTransactionReceipt({ hash: addTx });
-    console.log({ addTx });
   });
 
 task("flywheel:deploy-dynamic-rewards-fw", "Deploy dynamic rewards flywheel for LM rewards")
