@@ -176,14 +176,17 @@ task("flywheel:deploy-dynamic-rewards-fw", "Deploy dynamic rewards flywheel for 
 
       console.log(`Set rewards (${rewards.address}) to flywheel (${flywheel.address})`);
       const strategyAddresses = strategies.split(",");
-      const allFlywheelStrategies = await _flywheel.read.getAllStrategies();
+      const allFlywheelStrategies = (await _flywheel.read.getAllStrategies()) as Address[];
       for (const strategy of strategyAddresses) {
-        if (!allFlywheelStrategies.includes(strategy)) {
+        if (!allFlywheelStrategies.map((s) => s.toLowerCase()).includes(strategy.toLowerCase())) {
           console.log(`Adding strategy ${strategy} to flywheel ${flywheel.address}`);
-          await run("flywheel:add-strategy-for-rewards", { flywheel: flywheel.address, strategy, name: `${contractName}_${name}` });
+          await run("flywheel:add-strategy-for-rewards", {
+            flywheel: flywheel.address,
+            strategy,
+            name: `${contractName}_${name}`
+          });
           console.log(`Added strategy (${strategy}) to flywheel (${flywheel.address})`);
-        }
-        else console.log(`Strategy (${strategy}) was already added to flywheel (${flywheel.address})`);
+        } else console.log(`Strategy (${strategy}) was already added to flywheel (${flywheel.address})`);
       }
       await run("flywheel:add-to-pool", { flywheel: flywheel.address, pool });
       console.log(`Added flywheel (${flywheel.address}) to pool (${pool})`);
