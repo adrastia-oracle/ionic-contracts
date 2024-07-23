@@ -38,7 +38,13 @@ const config: HardhatUserConfig = {
     },
     base: {
       url: process.env.OVERRIDE_RPC_URL ?? "https://mainnet.base.org",
-      accounts: [process.env.DEPLOYER!]
+      accounts: [process.env.DEPLOYER!],
+      verify: {
+        etherscan: {
+          apiUrl: "https://api.basescan.org/api?",
+          apiKey: process.env.ETHERSCAN_API_KEY_BASE
+        }
+      }
     },
     optimism: {
       url: process.env.OVERRIDE_RPC_URL ?? "https://mainnet.optimism.io",
