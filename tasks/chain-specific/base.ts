@@ -18,25 +18,23 @@ task("market:base:rsr-ion-rewards", "Sets caps on a market").setAction(
     const markets = `${ionbsdETH},${ioneUSD}`;
 
     // STEP 1: upgrade markets to the new implementation
-    console.log(`Upgrading market: ${ionbsdETH} to CErc20PluginRewardsDelegate with plugin: ${zeroAddress}`);
+    console.log(`Upgrading market: ${ionbsdETH} to CErc20RewardsDelegate`);
     await run("market:upgrade", {
       comptroller,
       underlying: bsdETH,
-      implementationAddress: (await deployments.get("CErc20PluginRewardsDelegate")).address,
-      pluginAddress: zeroAddress,
+      implementationAddress: (await deployments.get("CErc20RewardsDelegate")).address,
       signer: deployer
     });
 
-    console.log(`Upgrading market: ${ioneUSD} to CErc20PluginRewardsDelegate with plugin: ${zeroAddress}`);
+    console.log(`Upgrading market: ${ioneUSD} to CErc20RewardsDelegate`);
     await run("market:upgrade", {
       comptroller,
       underlying: eUSD,
-      implementationAddress: (await deployments.get("CErc20PluginRewardsDelegate")).address,
-      pluginAddress: zeroAddress,
+      implementationAddress: (await deployments.get("CErc20RewardsDelegate")).address,
       signer: deployer
     });
     console.log("Market upgraded");
-
+    /*
     const ionToken = await viem.getContractAt("EIP20Interface", IONIC);
     const balance = await ionToken.read.balanceOf([ionbsdETH]);
     if (balance < parseEther("105263.157895")) {
@@ -46,17 +44,18 @@ task("market:base:rsr-ion-rewards", "Sets caps on a market").setAction(
     if (balanceUSD < parseEther("114416.475973")) {
       await ionToken.write.transfer([ioneUSD, parseEther("114416.475973")]);
     }
-
+    */
     /*
-  // NOTE: change name and reward token
-  await run("flywheel:deploy-dynamic-rewards-fw", { name: "RSR", rewardToken: "RSR_TOKEN_ADDRESS", booster: "", strategies: markets, pool: fpd.address });
+    // NOTE: change name and reward token
+    await run("flywheel:deploy-dynamic-rewards-fw", { name: "RSR", rewardToken: "RSR_TOKEN_ADDRESS", booster: "", strategies: markets, pool: fpd.address });
 
-  const flywheel = await viem.getContractAt("IonicFlywheel", (await deployments.get("IonicFlywheel")).address as Address);
-  await run("approve-market-flywheel", { fwAddress: flywheel.address, markets: markets });
-  
-  const tx = await flywheel.write.updateFeeSettings([0, deployer.address]);
-  await publicClient.waitForTransactionReceipt({ hash: tx });
-  */
+    const flywheel = await viem.getContractAt("IonicFlywheel", (await deployments.get("IonicFlywheel")).address as Address);
+    await run("approve-market-flywheel", { fwAddress: flywheel.address, markets: markets });
+    
+    const tx = await flywheel.write.updateFeeSettings([0, deployer.address]);
+    await publicClient.waitForTransactionReceipt({ hash: tx });
+    */
+    /*
     await run("flywheel:deploy-borrow-booster", { name: "ION" });
     // NOTE: change name and reward token
     await run("flywheel:deploy-dynamic-rewards-fw", {
@@ -75,5 +74,6 @@ task("market:base:rsr-ion-rewards", "Sets caps on a market").setAction(
 
     const txBorrow = await flywheelBorrow.write.updateFeeSettings([0n, deployer as Address]);
     await publicClient.waitForTransactionReceipt({ hash: txBorrow });
+    */
   }
 );
