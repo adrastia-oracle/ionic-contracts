@@ -52,7 +52,7 @@ export default task("market:upgrade", "Upgrades a market's implementation")
       throw `Failed set implementation to ${implementationAddress}`;
     }
     console.log(
-      `Implementation successfully set to ${implementationAddress} with plugin ${await cTokenInstance.read.plugin()}`
+      `Implementation successfully set to ${implementationAddress} with plugin ${await cTokenInstance.read.plugin()}: ${setImplementationTx}`
     );
   });
 
