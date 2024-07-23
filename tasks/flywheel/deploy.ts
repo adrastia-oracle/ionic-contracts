@@ -124,8 +124,10 @@ task("flywheel:add-to-pool", "Create pool if does not exist")
     }
 
     const comptroller = await viem.getContractAt("Comptroller", poolAddress);
-    const addTx = await comptroller.write._addRewardsDistributor([flywheelAddress]);
-
+    const rewardsDistributors = (await comptroller.read.getRewardsDistributors()) as Address[];
+    if (!rewardsDistributors.map((s) => s.toLowerCase()).includes(flywheelAddress.toLowerCase())) {
+      const addTx = await comptroller.write._addRewardsDistributor([flywheelAddress]);
+    }
     await publicClient.waitForTransactionReceipt({ hash: addTx });
     console.log({ addTx });
   });
