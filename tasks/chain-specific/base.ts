@@ -9,7 +9,9 @@ task("market:base:rsr-ion-rewards", "Sets caps on a market").setAction(
     //const comptroller = await viem.getContractAt("Comptroller", (await deployments.get("Comptroller")).address as Address);
     //const markets = await comptroller.read.getAllMarkets();
     const ionbsdETH = "0x3d9669de9e3e98db41a1cbf6dc23446109945e3c";
+    const bsdETH = "0xCb327b99fF831bF8223cCEd12B1338FF3aA322Ff";
     const ioneUSD = "0x9c2a4f9c5471fd36be3bbd8437a33935107215a1";
+    const eUSD = "0xCfA3Ef56d303AE4fAabA0592388F19d7C3399FB4";
     const IONIC = "0x3eE5e23eEE121094f1cFc0Ccc79d6C809Ebd22e5";
     const pool = "0x05c9C6417F246600f8f5f49fcA9Ee991bfF73D13";
     const comptroller = "0x05c9C6417F246600f8f5f49fcA9Ee991bfF73D13";
@@ -19,7 +21,7 @@ task("market:base:rsr-ion-rewards", "Sets caps on a market").setAction(
     console.log(`Upgrading market: ${ionbsdETH} to CErc20PluginRewardsDelegate with plugin: ${zeroAddress}`);
     await run("market:upgrade", {
       comptroller,
-      underlying: ionbsdETH,
+      underlying: bsdETH,
       implementationAddress: (await deployments.get("CErc20PluginRewardsDelegate")).address,
       pluginAddress: zeroAddress,
       signer: deployer
@@ -28,7 +30,7 @@ task("market:base:rsr-ion-rewards", "Sets caps on a market").setAction(
     console.log(`Upgrading market: ${ioneUSD} to CErc20PluginRewardsDelegate with plugin: ${zeroAddress}`);
     await run("market:upgrade", {
       comptroller,
-      underlying: ioneUSD,
+      underlying: eUSD,
       implementationAddress: (await deployments.get("CErc20PluginRewardsDelegate")).address,
       pluginAddress: zeroAddress,
       signer: deployer

@@ -23,14 +23,9 @@ export default task("market:upgrade", "Upgrades a market's implementation")
     );
 
     let cTokenInstance;
-
     for (let index = 0; index < cTokenInstances.length; index++) {
       const thisUnderlying = await cTokenInstances[index].read.underlying();
-      console.log({
-        underlying: thisUnderlying,
-        market: cTokenInstances[index].address
-      });
-      if (!cTokenInstance && thisUnderlying === underlying) {
+      if (!cTokenInstance && thisUnderlying.toLowerCase() === underlying.toLowerCase()) {
         cTokenInstance = cTokenInstances[index];
       }
     }
