@@ -29,13 +29,10 @@ const config: HardhatUserConfig = {
       }
     ]
   },
-  external: {
-    contracts: [{ artifacts: "./out" }]
-  },
   paths: {
     sources: "./contracts",
     tests: "./contracts/test",
-    artifacts: "./out"
+    artifacts: "./artifacts"
   },
   networks: {
     local: {
@@ -59,6 +56,14 @@ const config: HardhatUserConfig = {
       url: "https://rpc.gobob.xyz",
       accounts: [process.env.DEPLOYER!]
     }
+  },
+  etherscan: {
+    apiKey: {
+      base: "4RTI7UU6PR6Q2S2NJB4FAKK8Z6FTN3ZQRN"
+    }
+  },
+  sourcify: {
+    enabled: true
   }
 };
 
