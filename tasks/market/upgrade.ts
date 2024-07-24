@@ -6,12 +6,10 @@ export default task("market:upgrade", "Upgrades a market's implementation")
   .addParam("comptroller", "address of comptroller", undefined, types.string) // TODO I would rather use id or comptroller address directly.
   .addParam("underlying", "Underlying asset symbol or address", undefined, types.string)
   .addParam("implementationAddress", "The address of the new implementation", "", types.string)
-  .addOptionalParam("pluginAddress", "The address of plugin which is supposed to used", "", types.string)
   .addOptionalParam("signer", "Named account that is an admin of the pool", "deployer", types.string)
   .setAction(async (taskArgs, { viem, deployments }) => {
     const publicClient = await viem.getPublicClient();
     const { implementationAddress, comptroller: comptrollerAddress, underlying, signer: namedSigner } = taskArgs;
-    let { pluginAddress } = taskArgs;
 
     const comptroller = await viem.getContractAt("IonicComptroller", comptrollerAddress as Address);
 
@@ -24,14 +22,9 @@ export default task("market:upgrade", "Upgrades a market's implementation")
     );
 
     let cTokenInstance;
-
     for (let index = 0; index < cTokenInstances.length; index++) {
       const thisUnderlying = await cTokenInstances[index].read.underlying();
-      console.log({
-        underlying: thisUnderlying,
-        market: cTokenInstances[index].address
-      });
-      if (!cTokenInstance && thisUnderlying === underlying) {
+      if (!cTokenInstance && thisUnderlying.toLowerCase() === underlying.toLowerCase()) {
         cTokenInstance = cTokenInstances[index];
       }
     }
@@ -39,13 +32,9 @@ export default task("market:upgrade", "Upgrades a market's implementation")
       throw Error(`No market corresponds to this underlying: ${underlying}`);
     }
 
-    if (!pluginAddress) {
-      pluginAddress = zeroAddress;
-    }
+    const implementationData = "0x";
 
-    const implementationData = encodeAbiParameters(parseAbiParameters("address"), [pluginAddress]);
-
-    console.log(`Setting implementation to ${implementationAddress} with plugin ${pluginAddress}`);
+    console.log(`Setting implementation to ${implementationAddress}`);
     const setImplementationTx = await cTokenInstance.write._setImplementationSafe([
       implementationAddress,
       implementationData
@@ -58,7 +47,7 @@ export default task("market:upgrade", "Upgrades a market's implementation")
       throw `Failed set implementation to ${implementationAddress}`;
     }
     console.log(
-      `Implementation successfully set to ${implementationAddress} with plugin ${await cTokenInstance.read.plugin()}`
+      `Implementation successfully set to ${implementationAddress}: ${setImplementationTx}`
     );
   });
 

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.10;
 
-import { FlywheelDynamicRewards } from "flywheel-v2/rewards/FlywheelDynamicRewards.sol";
-import { BaseFlywheelRewards } from "flywheel-v2/rewards/BaseFlywheelRewards.sol";
-import { FlywheelCore } from "flywheel-v2/FlywheelCore.sol";
+import { FlywheelDynamicRewards } from "./FlywheelDynamicRewards.sol";
+import { BaseFlywheelRewards } from "./BaseFlywheelRewards.sol";
+import { IonicFlywheelCore } from "../IonicFlywheelCore.sol";
 import { Auth, Authority } from "solmate/auth/Auth.sol";
 import { SafeTransferLib, ERC20 } from "solmate/utils/SafeTransferLib.sol";
 
@@ -18,11 +18,11 @@ interface IPlugin {
 contract ReplacingFlywheelDynamicRewards is FlywheelDynamicRewards {
   using SafeTransferLib for ERC20;
 
-  FlywheelCore public replacedFlywheel;
+  IonicFlywheelCore public replacedFlywheel;
 
   constructor(
-    FlywheelCore _replacedFlywheel,
-    FlywheelCore _flywheel,
+    IonicFlywheelCore _replacedFlywheel,
+    IonicFlywheelCore _flywheel,
     uint32 _cycleLength
   ) FlywheelDynamicRewards(_flywheel, _cycleLength) {
     replacedFlywheel = _replacedFlywheel;

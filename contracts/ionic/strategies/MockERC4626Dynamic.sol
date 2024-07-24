@@ -5,7 +5,7 @@ import { ERC20 } from "solmate/tokens/ERC20.sol";
 
 import { ERC4626 } from "solmate/mixins/ERC4626.sol";
 import { FixedPointMathLib } from "solmate/utils/FixedPointMathLib.sol";
-import { FlywheelCore } from "flywheel-v2/FlywheelCore.sol";
+import { IonicFlywheelCore } from "./flywheel/IonicFlywheelCore.sol";
 
 /**
  * @title Mock ERC4626 Contract
@@ -17,7 +17,7 @@ contract MockERC4626Dynamic is ERC4626 {
   using FixedPointMathLib for uint256;
 
   /* ========== STATE VARIABLES ========== */
-  FlywheelCore public immutable flywheel;
+  IonicFlywheelCore public immutable flywheel;
 
   /* ========== INITIALIZER ========== */
 
@@ -26,7 +26,7 @@ contract MockERC4626Dynamic is ERC4626 {
      @param _asset The ERC20 compliant token the Vault should accept.
      @param _flywheel Flywheel to pull in rewardsToken
     */
-  constructor(ERC20 _asset, FlywheelCore _flywheel)
+  constructor(ERC20 _asset, IonicFlywheelCore _flywheel)
     ERC4626(
       _asset,
       string(abi.encodePacked("Midas ", _asset.name(), " Vault")),

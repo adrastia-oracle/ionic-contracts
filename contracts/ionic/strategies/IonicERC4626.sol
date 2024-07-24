@@ -31,12 +31,12 @@ abstract contract IonicERC4626 is SafeOwnableUpgradeable, PausableUpgradeable, E
 
   /* ========== INITIALIZER ========== */
 
-  function __MidasER4626_init(ERC20Upgradeable asset_) internal onlyInitializing {
+  function __IonicER4626_init(ERC20Upgradeable asset_) internal onlyInitializing {
     __SafeOwnable_init(msg.sender);
     __Pausable_init();
     __Context_init();
     __ERC20_init(
-      string(abi.encodePacked("Midas ", asset_.name(), " Vault")),
+      string(abi.encodePacked("Ionic ", asset_.name(), " Vault")),
       string(abi.encodePacked("mv", asset_.symbol()))
     );
     __ERC4626_init(asset_);
