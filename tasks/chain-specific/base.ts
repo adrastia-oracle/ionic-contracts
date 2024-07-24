@@ -21,7 +21,8 @@ task("market:base:rsr-ion-rewards", "Sets caps on a market").setAction(
 
 
     const comptrollerContract = await viem.getContractAt("IonicComptroller", comptroller as Address);
-    const tx = await comptrollerContract.addNonAccruingFlywheel("0x52f8074831f37e9698acaed2b27387d425f585a9");
+    const tx = await comptrollerContract.write.addNonAccruingFlywheel(["0x52f8074831f37e9698acaed2b27387d425f585a9"]);
+    console.log("tx: ", tx);
     await publicClient.waitForTransactionReceipt({ hash: tx });
 
     /*
