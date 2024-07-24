@@ -17,13 +17,14 @@ task("market:base:rsr-ion-rewards", "Sets caps on a market").setAction(
     const comptroller = "0x05c9C6417F246600f8f5f49fcA9Ee991bfF73D13";
     const markets = `${ionbsdETH},${ioneUSD}`;
 
-    flywheelRewards = "LATEST_FLYWHEEL_REWARDS_CONTRACT"
-    flywheel = "LATEST_FLYWHEEL_CONTRACT"
+    const rewardsContract = (await deployments.get("IonicFlywheelDynamicRewards_Borrow_ION")).address as Address;
 
-    const rewardsContract = await viem.getContractAt("IonicFlywheelDynamicRewards_Borrow_ION", flywheelRewards);
+    const flywheelContract = await viem.getContractAt(
+      "IonicFlywheelBorrow",
+      (await deployments.get("IonicFlywheelBorrow_Borrow_ION")).address as Address
+    );
 
-    const flywheelContract = await viem.getContractAt("IonicFlywheelBorrow", flywheel);
-    const tx = await flywheelContract.write.setFlywheelRewards([rewardsContract.address as Address]);
+    const tx = await flywheelContract.write.setFlywheelRewards([rewardsContract as Address]);
     await publicClient.waitForTransactionReceipt({ hash: tx });
     /*
     // STEP 1: upgrade markets to the new implementation
