@@ -17,6 +17,15 @@ task("market:base:rsr-ion-rewards", "Sets caps on a market").setAction(
     const comptroller = "0x05c9C6417F246600f8f5f49fcA9Ee991bfF73D13";
     const markets = `${ionbsdETH},${ioneUSD}`;
 
+    flywheelRewards = "LATEST_FLYWHEEL_REWARDS_CONTRACT"
+    flywheel = "LATEST_FLYWHEEL_CONTRACT"
+
+    const rewardsContract = await viem.getContractAt("IonicFlywheelDynamicRewards_Borrow_ION", flywheelRewards);
+
+    const flywheelContract = await viem.getContractAt("IonicFlywheelBorrow", flywheel);
+    const tx = await flywheelContract.write.setFlywheelRewards([rewardsContract.address as Address]);
+    await publicClient.waitForTransactionReceipt({ hash: tx });
+    /*
     // STEP 1: upgrade markets to the new implementation
     console.log(`Upgrading market: ${ionbsdETH} to CErc20RewardsDelegate`);
     await run("market:upgrade", {
@@ -34,7 +43,8 @@ task("market:base:rsr-ion-rewards", "Sets caps on a market").setAction(
       signer: deployer
     });
     console.log("Market upgraded");
-    /*
+  
+    // STEP 2: send reward tokens to strategies 
     const ionToken = await viem.getContractAt("EIP20Interface", IONIC);
     const balance = await ionToken.read.balanceOf([ionbsdETH]);
     if (balance < parseEther("105263.157895")) {

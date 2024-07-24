@@ -213,7 +213,7 @@ task("flywheel:deploy-dynamic-rewards", "Deploy dynamic rewards flywheel for LM 
       ],
       waitConfirmations: 1
     });
-    const flywheelContract = await viem.getContractAt("IonicFlywheel", flywheel);
+    const flywheelContract = await viem.getContractAt("IonicFlywheelBorrow", flywheel);
     const tx = await flywheelContract.write.setFlywheelRewards([rewards.address as Address]);
     await publicClient.waitForTransactionReceipt({ hash: tx });
     return rewards;
