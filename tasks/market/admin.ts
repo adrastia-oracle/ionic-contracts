@@ -17,9 +17,9 @@ task("market:set:ltv", "Set the LTV (loan to value / collateral factor) of a mar
   .addParam("ltv", "The LTV as a floating point value between 0 and 1", undefined, types.string)
   .setAction(async ({ marketAddress, ltv }, { viem }) => {
     const publicClient = await viem.getPublicClient();
-    const market = await viem.getContractAt("CTokenInterfaces.sol:ICErc20", marketAddress);
+    const market = await viem.getContractAt("ICErc20", marketAddress);
     const poolAddress = await market.read.comptroller();
-    const pool = await viem.getContractAt("Comptroller.sol:Comptroller", poolAddress as Address);
+    const pool = await viem.getContractAt("IonicComptroller", poolAddress as Address);
 
     const ltvMantissa = parseUnits(ltv, 18);
     console.log(`will set the LTV of market ${marketAddress} to ${ltvMantissa}`);

@@ -54,6 +54,10 @@ const config: HardhatUserConfig = {
     optimism: {
       url: "https://mainnet.optimism.io",
       accounts: [process.env.DEPLOYER!]
+    },
+    bob: {
+      url: "https://rpc.gobob.xyz",
+      accounts: [process.env.DEPLOYER!]
     }
   }
 };

@@ -6,3 +6,4 @@ import "./leverage/configurePair";
 import "./plugin";
 import "./pool";
 import "./market";
+import "./chain-setup";
