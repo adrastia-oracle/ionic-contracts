@@ -64,37 +64,79 @@ task("market:upgrade:safe", "Upgrades a market's implementation")
     let { pluginAddress } = taskArgs;
 
     const cTokenDelegator = await viem.getContractAt("CErc20Delegator", marketAddress);
-
     const cfe = await viem.getContractAt(
       "CTokenFirstExtension",
       (await deployments.get("CTokenFirstExtension")).address as Address
     );
+    const ap = await viem.getContractAt(
+      "AddressesProvider",
+      (await deployments.get("AddressesProvider")).address as Address
+    );
+
     const impl = await cTokenDelegator.read.implementation();
     const extensions = await cTokenDelegator.read._listExtensions();
-
+    const comptroller = await cTokenDelegator.read.comptroller();
+    const comptrollerAsExt = await viem.getContractAt("IonicComptroller", comptroller as Address);
+    const ctokenAsExt = await viem.getContractAt("CTokenFirstExtension", marketAddress)
+    
     if (
       impl.toLowerCase() != implementationAddress.toLowerCase() ||
       extensions.length == 0 ||
-      extensions[0].toLowerCase() != cfe.address.toLowerCase()
+      extensions[1].toLowerCase() != cfe.address.toLowerCase()
     ) {
       if (!pluginAddress) {
         pluginAddress = zeroAddress;
       }
-
       const implementationData = encodeAbiParameters(parseAbiParameters("address"), [pluginAddress]);
-
       console.log(`Setting implementation to ${implementationAddress} with plugin ${pluginAddress}`);
 
-      await prepareAndLogTransaction({
-        contractInstance: cTokenDelegator,
-        functionName: "_setImplementationSafe",
-        args: [implementationAddress, implementationData],
-        description: `Setting new implementation on ${cTokenDelegator.address}`,
-        inputs: [
-          { internalType: "address", name: "implementation_", type: "address" },
-          { internalType: "bytes", name: "implementationData", type: "bytes" }
-        ]
-      });
+      const comptrollerAdmin = await comptrollerAsExt.read.admin()
+      if(comptrollerAdmin.toLowerCase() !== deployer.toLowerCase()) {        
+        await prepareAndLogTransaction({
+          contractInstance: cTokenDelegator,
+          functionName: "_setImplementationSafe",
+          args: [implementationAddress, implementationData],
+          description: `Setting new implementation on ${cTokenDelegator.address}`,
+          inputs: [
+            { internalType: "address", name: "implementation_", type: "address" },
+            { internalType: "bytes", name: "implementationData", type: "bytes" }
+          ]
+        });
+        await prepareAndLogTransaction({
+          contractInstance: ctokenAsExt,
+          functionName: "_setAddressesProvider",
+          args: [ap.address],
+          description: `Setting AddressesProvider on ${marketAddress}`,
+          inputs: [
+            { internalType: "address", name: "_ap", type: "address" }
+          ]
+        });
+      } else {
+        console.log(`Setting implementation to ${implementationAddress}`);
+        const setImplementationTx = await cTokenDelegator.write._setImplementationSafe([
+          implementationAddress,
+          implementationData
+        ]);
+        const receipt = await publicClient.waitForTransactionReceipt({
+          hash: setImplementationTx
+        });
+        if (receipt.status !== "success") {
+          throw `Failed set implementation to ${implementationAddress}`;
+        }
+        console.log(
+          `Implementation successfully set to ${implementationAddress}: ${setImplementationTx}`
+        );
+
+        console.log(`Setting AP to to ${ap.address}`);
+        const setAPTX = await ctokenAsExt.write._setAddressesProvider([ap.address]);
+        const receiptAP = await publicClient.waitForTransactionReceipt({
+          hash: setAPTX
+        });
+        if (receiptAP.status !== "success") {
+          throw `Failed set AP to ${ap.address}`;
+        }
+        console.log(`AP successfully set to ${ap.address}`);
+      }
 
       if (pluginAddress != zeroAddress) {
         const cTokenPluginInstance = await viem.getContractAt("ICErc20Plugin", marketAddress);
@@ -102,7 +144,7 @@ task("market:upgrade:safe", "Upgrades a market's implementation")
       }
     } else {
       console.log(
-        `market ${marketAddress} impl ${impl} already eq ${implementationAddress} and extension ${cfe.address} eq ${extensions[0]}`
+        `market ${marketAddress} impl ${impl} already eq ${implementationAddress} and extension ${cfe.address} eq ${extensions[1]}`
       );
     }
   });
@@ -122,12 +164,6 @@ task("markets:upgrade-and-setup", "Upgrades all markets and sets addresses provi
       "FeeDistributor",
       (await deployments.get("FeeDistributor")).address as Address
     );
-
-    const addressProvider = await viem.getContractAt(
-      "AddressesProvider",
-      (await deployments.get("AddressesProvider")).address as Address
-    );
-
     const ionicUniV3Liquidator = await viem.getContractAt(
       "IonicUniV3Liquidator",
       (await deployments.get("IonicUniV3Liquidator")).address as Address
@@ -145,20 +181,6 @@ task("markets:upgrade-and-setup", "Upgrades all markets and sets addresses provi
       ]
     });
     
-    await prepareAndLogTransaction({
-      contractInstance: addressProvider,
-      functionName: "setAddress",
-      args: [
-        "PoolLens",
-        (await deployments.get("PoolLens")).address as Address
-      ],
-      description: `Setting PoolLens id on AddressProvider`,
-      inputs: [
-        { internalType: "string", name: "id", type: "string" },
-        { internalType: "address", name: "newAddress", type: "address" }
-      ]
-    });
-
     const [, pools] = await poolDirectory.read.getActivePools();
     for (let i = 0; i < pools.length; i++) {
       const pool = pools[i];
@@ -178,24 +200,9 @@ task("markets:upgrade-and-setup", "Upgrades all markets and sets addresses provi
             marketAddress: market,
             implementationAddress: latestImpl,
           });
-          const ap = await viem.getContractAt(
-            "AddressesProvider",
-            (await deployments.get("AddressesProvider")).address as Address
-          );
-          const ctokenAsExt = await viem.getContractAt("CTokenFirstExtension", market)
-
-          await prepareAndLogTransaction({
-            contractInstance: ctokenAsExt,
-            functionName: "_setAddressesProvider",
-            args: [ap.address],
-            description: `Setting AddressesProvider on ${market}`,
-            inputs: [
-              { internalType: "address", name: "_ap", type: "address" }
-            ]
-          });
         }
       } catch (e) {
-        console.error(`error while upgrading the pool ${JSON.stringify(pool)}`, e);
+        console.error(`error while upgrading the pool`, e);
       }
     }
   });

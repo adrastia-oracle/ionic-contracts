@@ -15,6 +15,7 @@ import { FeeDistributor } from "../FeeDistributor.sol";
 import { CTokenFirstExtension } from "../compound/CTokenFirstExtension.sol";
 import { ComptrollerV3Storage } from "../compound/ComptrollerStorage.sol";
 import { IonicComptroller } from "../compound/ComptrollerInterface.sol";
+import { ILiquidator } from "../ILiquidator.sol";
 
 import { IERC20Upgradeable } from "openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
@@ -22,10 +23,18 @@ import { PoolLens } from "../PoolLens.sol";
 import { AddressesProvider } from "../ionic/AddressesProvider.sol";
 import { IonicUniV3Liquidator } from "../IonicUniV3Liquidator.sol";
 import { ERC20 } from "solmate/tokens/ERC20.sol";
+import { IRedemptionStrategy } from "../liquidators/IRedemptionStrategy.sol";
+import { IFundsConversionStrategy } from "../liquidators/IFundsConversionStrategy.sol";
 
 contract PermissionedLiquidationsMarketTest is MarketsTest {
   ICErc20 wethMarket;
   ICErc20 usdtMarket;
+
+  ICErc20 wethNativeMarket;
+  ICErc20 usdcNativeMarket;
+  ICErc20 usdtNativeMarket;
+  ICErc20 modeNativeMarket;
+
   IonicComptroller pool;
   PoolLens lens;
   address borrower;
@@ -37,6 +46,12 @@ contract PermissionedLiquidationsMarketTest is MarketsTest {
 
     wethMarket = ICErc20(0x71ef7EDa2Be775E5A7aa8afD02C45F059833e9d2);
     usdtMarket = ICErc20(0x94812F2eEa03A49869f95e1b5868C6f3206ee3D3);
+
+    wethNativeMarket = ICErc20(0xDb8eE6D1114021A94A045956BBeeCF35d13a30F2);
+    usdcNativeMarket = ICErc20(0xc53edEafb6D502DAEC5A7015D67936CEa0cD0F52);
+    usdtNativeMarket = ICErc20(0x3120B4907851cc9D780eef9aF88ae4d5360175Fd);
+    modeNativeMarket = ICErc20(0x4341620757Bee7EB4553912FaFC963e59C949147);
+
     pool = IonicComptroller(0xFB3323E24743Caf4ADD0fDCCFB268565c0685556);
     lens = PoolLens(0x70BB19a56BfAEc65aE861E6275A90163AbDF36a6);
     ffd = FeeDistributor(payable(ap.getAddress("FeeDistributor")));
@@ -162,6 +177,54 @@ contract PermissionedLiquidationsMarketTest is MarketsTest {
     (bool success, bytes memory returnData) = targetContract.call(data);
     require(success, "Transaction failed");
     vm.stopPrank();
+  }
+
+  function testPostUpgradeLiquidate() public debuggingOnly fork(MODE_MAINNET) {
+    address borrower = 0xE10B38bbe359656066b3c4648DfEa7018711c35f;
+    PoolLens.PoolAsset[] memory assets = lens.getPoolAssetsByUser(pool, borrower);
+
+    for (uint i; i < assets.length; i++) {
+      emit log_named_string("Asset Named", assets[i].underlyingName);
+      emit log_named_uint("Supply Balance", assets[i].supplyBalance);
+      emit log_named_uint("Borrow Balance", assets[i].borrowBalance);
+      emit log_named_uint("Liquidity", assets[i].liquidity);
+      emit log("----------------------------------------------------");
+    }
+
+    emit log_named_uint("HF", lens.getHealthFactor(borrower, pool));
+
+    // vm.startPrank(0x344d9C4f488bb5519D390304457D64034618145C);
+
+    // ERC20(0xd988097fb8612cc24eeC14542bC03424c656005f).approve(address(uniV3liquidator), 4000);
+
+    // // ILiquidator.LiquidateToTokensWithFlashSwapVars memory vars = ILiquidator.LiquidateToTokensWithFlashSwapVars({
+    // //   borrower: borrower,
+    // //   repayAmount: 4000,
+    // //   cErc20: ICErc20(0x2BE717340023C9e14C1Bb12cb3ecBcfd3c3fB038),
+    // //   cTokenCollateral: wethMarket,
+    // //   flashSwapContract: 0x468cC91dF6F669CaE6cdCE766995Bd7874052FBc,
+    // //   minProfitAmount: 0,
+    // //   redemptionStrategies: new IRedemptionStrategy[](0),
+    // //   strategyData: new bytes[](0),
+    // //   debtFundingStrategies: new IFundsConversionStrategy[](0),
+    // //   debtFundingStrategiesData: new bytes[](0)
+    // // });
+    // // uniV3liquidator.safeLiquidateToTokensWithFlashLoan(vars);
+
+    // uniV3liquidator.safeLiquidate(borrower, 4000, ICErc20(0x2BE717340023C9e14C1Bb12cb3ecBcfd3c3fB038), wethMarket, 0);
+
+    // vm.stopPrank();
+
+    // emit log_named_uint("HF", lens.getHealthFactor(borrower, pool));
+  }
+
+  function testUpgradeNativeMarket() public debuggingOnly fork(MODE_MAINNET) {
+    _upgradeMarket(wethNativeMarket);
+    _upgradeMarket(usdcNativeMarket);
+    _upgradeMarket(usdtNativeMarket);
+    _upgradeMarket(modeNativeMarket);
+    _upgradeMarket(wethMarket);
+    _upgradeMarket(usdtMarket);
   }
 
   struct CErc20StorageStruct {
@@ -430,5 +493,29 @@ contract PermissionedLiquidationsMarketTest is MarketsTest {
       storageDataAfter.feeSeizeShareMantissa,
       "Mismatch in feeSeizeShareMantissa"
     );
+  }
+
+  function testCurrentMarkets() public debuggingOnly forkAtBlock(MODE_MAINNET, 10785800) {
+    address[] memory ionAddresses = new address[](10);
+
+    _upgradeMarket(wethMarket);
+
+    ionAddresses[0] = 0x71ef7EDa2Be775E5A7aa8afD02C45F059833e9d2;
+    ionAddresses[1] = 0x2BE717340023C9e14C1Bb12cb3ecBcfd3c3fB038;
+    ionAddresses[2] = 0x94812F2eEa03A49869f95e1b5868C6f3206ee3D3;
+    ionAddresses[3] = 0xd70254C3baD29504789714A7c69d60Ec1127375C;
+    ionAddresses[4] = 0x59e710215d45F584f44c0FEe83DA6d43D762D857;
+    ionAddresses[5] = 0x959FA710CCBb22c7Ce1e59Da82A247e686629310;
+    ionAddresses[6] = 0x49950319aBE7CE5c3A6C90698381b45989C99b46;
+    ionAddresses[7] = 0xA0D844742B4abbbc43d8931a6Edb00C56325aA18;
+    ionAddresses[8] = 0x9a9072302B775FfBd3Db79a7766E75Cf82bcaC0A;
+    ionAddresses[9] = 0x19F245782b1258cf3e11Eda25784A378cC18c108;
+
+    address ap;
+    for (uint i = 0; i < ionAddresses.length; i++) {
+      // ap = address(CTokenFirstExtension(ionAddresses[i]).ap());
+      ap = address(CTokenFirstExtension(address(wethMarket)).ap());
+      emit log_named_address("ap", ap);
+    }
   }
 }
