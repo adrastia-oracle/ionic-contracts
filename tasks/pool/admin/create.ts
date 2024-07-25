@@ -10,7 +10,7 @@ import {
   encodePacked
 } from "viem";
 
-import UnitrollerArtifact from "../../../artifacts/contracts/compound/Unitroller.sol/Unitroller.json";
+import UnitrollerArtifact from "../../../artifacts/Unitroller.sol/Unitroller.json";
 import { Address } from "viem";
 
 task("pool:create:mode").setAction(async ({}, { run }) => {
