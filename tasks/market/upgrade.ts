@@ -92,6 +92,10 @@ task("market:upgrade:safe", "Upgrades a market's implementation")
         pluginAddress = zeroAddress;
       }
 
+      console.log(extensions.length)
+      console.log(extensions[0].toLowerCase())
+      console.log(cfe.address.toLowerCase())
+
       const implementationData = encodeAbiParameters(parseAbiParameters("address"), [pluginAddress]);
 
       console.log(`Setting implementation to ${implementationAddress} with plugin ${pluginAddress}`);
@@ -134,11 +138,6 @@ task("markets:upgrade-and-setup", "Upgrades all markets and sets addresses provi
       (await deployments.get("FeeDistributor")).address as Address
     );
 
-    const addressProvider = await viem.getContractAt(
-      "AddressesProvider",
-      (await deployments.get("AddressesProvider")).address as Address
-    );
-
     const ionicUniV3Liquidator = await viem.getContractAt(
       "IonicUniV3Liquidator",
       (await deployments.get("IonicUniV3Liquidator")).address as Address
@@ -156,20 +155,6 @@ task("markets:upgrade-and-setup", "Upgrades all markets and sets addresses provi
       ]
     });
     
-    await prepareAndLogTransaction({
-      contractInstance: addressProvider,
-      functionName: "setAddress",
-      args: [
-        "PoolLens",
-        (await deployments.get("PoolLens")).address as Address
-      ],
-      description: `Setting PoolLens id on AddressProvider`,
-      inputs: [
-        { internalType: "string", name: "id", type: "string" },
-        { internalType: "address", name: "newAddress", type: "address" }
-      ]
-    });
-
     const [, pools] = await poolDirectory.read.getActivePools();
     for (let i = 0; i < pools.length; i++) {
       const pool = pools[i];
