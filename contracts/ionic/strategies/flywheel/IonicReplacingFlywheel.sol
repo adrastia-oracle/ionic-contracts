@@ -3,8 +3,8 @@ pragma solidity ^0.8.10;
 
 import "./IonicFlywheel.sol";
 
-import { IFlywheelRewards } from "flywheel-v2/interfaces/IFlywheelRewards.sol";
-import { IFlywheelBooster } from "flywheel-v2/interfaces/IFlywheelBooster.sol";
+import { IFlywheelRewards } from "./rewards/IFlywheelRewards.sol";
+import { IFlywheelBooster } from "./IFlywheelBooster.sol";
 
 contract IonicReplacingFlywheel is IonicFlywheel {
   IonicFlywheelCore public flywheelToReplace;

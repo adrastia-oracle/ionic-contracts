@@ -1,5 +1,6 @@
 import { task, types } from "hardhat/config";
 import { Address, Hash, parseUnits, zeroAddress } from "viem";
+import { prepareAndLogTransaction } from "../../chainDeploy/helpers/logging";
 
 export default task("market:unsupport", "Unsupport a market")
   .addParam("pool", "Comptroller Address", undefined, types.string)
@@ -17,9 +18,9 @@ task("market:set:ltv", "Set the LTV (loan to value / collateral factor) of a mar
   .addParam("ltv", "The LTV as a floating point value between 0 and 1", undefined, types.string)
   .setAction(async ({ marketAddress, ltv }, { viem }) => {
     const publicClient = await viem.getPublicClient();
-    const market = await viem.getContractAt("CTokenInterfaces.sol:ICErc20", marketAddress);
+    const market = await viem.getContractAt("ICErc20", marketAddress);
     const poolAddress = await market.read.comptroller();
-    const pool = await viem.getContractAt("Comptroller.sol:Comptroller", poolAddress as Address);
+    const pool = await viem.getContractAt("IonicComptroller", poolAddress as Address);
 
     const ltvMantissa = parseUnits(ltv, 18);
     console.log(`will set the LTV of market ${marketAddress} to ${ltvMantissa}`);
@@ -28,6 +29,107 @@ task("market:set:ltv", "Set the LTV (loan to value / collateral factor) of a mar
     console.log(`_setCollateralFactor tx ${tx}`);
     await publicClient.waitForTransactionReceipt({ hash: tx });
     console.log(`mined tx ${tx}`);
+  });
+
+task("markets:set:fees", "Set the fees of all markets").setAction(async (_, { viem, deployments, run }) => {
+  const DESIRED_ADMIN_FEE = "0";
+  const DESIRED_RESERVE_FACTOR = "0.05";
+
+  const poolDirectory = await viem.getContractAt(
+    "PoolDirectory",
+    (await deployments.get("PoolDirectory")).address as Address
+  );
+
+  const [, poolData] = await poolDirectory.read.getActivePools();
+
+  for (const pool of poolData) {
+    const comptroller = await viem.getContractAt("IonicComptroller", pool.comptroller);
+
+    const markets = await comptroller.read.getAllMarkets();
+
+    for (const market of markets) {
+      await run("market:set:admin-fee", { marketAddress: market, fee: DESIRED_ADMIN_FEE });
+      await run("market:set:reserve-factor", { marketAddress: market, factor: DESIRED_RESERVE_FACTOR });
+    }
+  }
+});
+
+task("market:set:admin-fee")
+  .addParam("marketAddress", "Address of the market", undefined, types.string)
+  .addParam("fee", "The fee as a floating point value between 0 and 1", undefined, types.string)
+  .setAction(async ({ marketAddress, fee }, { viem, getNamedAccounts, deployments }) => {
+    const { deployer } = await getNamedAccounts();
+    console.log("deployer: ", deployer);
+    const publicClient = await viem.getPublicClient();
+    const market = await viem.getContractAt("ICErc20", marketAddress);
+    const feeMantissa = parseUnits(fee, 18);
+    console.log(`will set the admin fee of market ${marketAddress} to ${feeMantissa}`);
+    const currentFee = await market.read.adminFeeMantissa();
+    console.log("currentFee: ", currentFee);
+    if (currentFee === feeMantissa) {
+      console.log(`Admin fee is already set to ${feeMantissa}`);
+      return;
+    }
+    const feeDistributor = await viem.getContractAt(
+      "FeeDistributor",
+      (await deployments.get("FeeDistributor")).address as Address
+    );
+
+    const admin = await feeDistributor.read.owner();
+    console.log("admin: ", admin);
+    if (admin.toLowerCase() !== deployer.toLowerCase()) {
+      await prepareAndLogTransaction({
+        contractInstance: market,
+        functionName: "_setAdminFee",
+        args: [String(feeMantissa)],
+        description: "Set Admin Fee",
+        inputs: [{ internalType: "uint256", name: "newAdminFeeMantissa", type: "uint256" }]
+      });
+    } else {
+      const tx = await market.write._setAdminFee([feeMantissa]);
+      console.log(`_setAdminFee tx ${tx}`);
+      await publicClient.waitForTransactionReceipt({ hash: tx });
+      console.log(`mined tx ${tx}`);
+    }
+  });
+
+task("market:set:reserve-factor")
+  .addParam("marketAddress", "Address of the market", undefined, types.string)
+  .addParam("factor", "The factor as a floating point value between 0 and 1", undefined, types.string)
+  .setAction(async ({ marketAddress, factor }, { viem, getNamedAccounts, deployments }) => {
+    const { deployer } = await getNamedAccounts();
+    console.log("deployer: ", deployer);
+    const publicClient = await viem.getPublicClient();
+    const market = await viem.getContractAt("ICErc20", marketAddress);
+    const factorMantissa = parseUnits(factor, 18);
+    console.log(`will set the reserve factor of market ${marketAddress} to ${factorMantissa}`);
+    const currentFactor = await market.read.reserveFactorMantissa();
+    console.log("currentFactor: ", currentFactor);
+    if (currentFactor === factorMantissa) {
+      console.log(`Reserve factor is already set to ${factorMantissa}`);
+      return;
+    }
+
+    const feeDistributor = await viem.getContractAt(
+      "FeeDistributor",
+      (await deployments.get("FeeDistributor")).address as Address
+    );
+    const admin = await feeDistributor.read.owner();
+    console.log("admin: ", admin);
+    if (admin.toLowerCase() !== deployer.toLowerCase()) {
+      await prepareAndLogTransaction({
+        contractInstance: market,
+        functionName: "_setReserveFactor",
+        args: [String(factorMantissa)],
+        description: "Set Reserve Factor",
+        inputs: [{ internalType: "uint256", name: "newReserveFactorMantissa", type: "uint256" }]
+      });
+    } else {
+      const tx = await market.write._setReserveFactor([factorMantissa]);
+      console.log(`_setReserveFactor tx ${tx}`);
+      await publicClient.waitForTransactionReceipt({ hash: tx });
+      console.log(`mined tx ${tx}`);
+    }
   });
 
 task("market:mint-pause", "Pauses minting on a market")

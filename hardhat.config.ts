@@ -11,7 +11,10 @@ dotenv();
 
 const config: HardhatUserConfig = {
   namedAccounts: {
-    deployer: { default: 0 }
+    deployer: { default: 0 },
+    multisig: {
+      34443: "0x8Fba84867Ba458E7c6E2c024D2DE3d0b5C3ea1C2"
+    }
   },
   solidity: {
     compilers: [
@@ -26,13 +29,10 @@ const config: HardhatUserConfig = {
       }
     ]
   },
-  external: {
-    contracts: [{ artifacts: "./out" }]
-  },
   paths: {
     sources: "./contracts",
     tests: "./contracts/test",
-    artifacts: "./out"
+    artifacts: "./artifacts"
   },
   networks: {
     local: {
@@ -41,17 +41,35 @@ const config: HardhatUserConfig = {
       saveDeployments: false
     },
     mode: {
-      url: "https://mainnet.mode.network",
+      url: process.env.OVERRIDE_RPC_URL ?? "https://mainnet.mode.network",
       accounts: [process.env.DEPLOYER!]
     },
     base: {
-      url: "https://mainnet.base.org",
-      accounts: [process.env.DEPLOYER!]
+      url: process.env.OVERRIDE_RPC_URL ?? "https://mainnet.base.org",
+      accounts: [process.env.DEPLOYER!],
+      verify: {
+        etherscan: {
+          apiUrl: "https://api.basescan.org/api?",
+          apiKey: process.env.ETHERSCAN_API_KEY_BASE
+        }
+      }
     },
     optimism: {
-      url: "https://mainnet.optimism.io",
+      url: process.env.OVERRIDE_RPC_URL ?? "https://mainnet.optimism.io",
+      accounts: [process.env.DEPLOYER!]
+    },
+    bob: {
+      url: process.env.OVERRIDE_RPC_URL ?? "https://rpc.gobob.xyz",
       accounts: [process.env.DEPLOYER!]
     }
+  },
+  etherscan: {
+    apiKey: {
+      base: "4RTI7UU6PR6Q2S2NJB4FAKK8Z6FTN3ZQRN"
+    }
+  },
+  sourcify: {
+    enabled: true
   }
 };
 
