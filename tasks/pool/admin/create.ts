@@ -10,8 +10,8 @@ import {
   encodePacked
 } from "viem";
 
-import UnitrollerArtifact from "../../../artifacts/Unitroller.sol/Unitroller.json";
 import { Address } from "viem";
+import { unitrollerBytecode } from "./constants";
 
 task("pool:create:mode").setAction(async ({}, { run }) => {
   await run("pool:create", {
@@ -114,7 +114,7 @@ task("pool:create", "Create pool if does not exist")
     // Compute Unitroller address
     const poolAddress = getContractAddress({
       bytecode: keccak256(
-        ((UnitrollerArtifact.bytecode as Hex) +
+        (unitrollerBytecode +
           encodeAbiParameters(parseAbiParameters("address"), [feeDistributorAddress]).slice(2)) as Hex
       ),
       from: deployer as Address,
