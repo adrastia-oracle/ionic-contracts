@@ -5,19 +5,17 @@ import { ERC20 } from "solmate/tokens/ERC20.sol";
 import { IonicFlywheelCore } from "./IonicFlywheelCore.sol";
 import "./IIonicFlywheel.sol";
 
-contract IonicFlywheel is IonicFlywheelCore, IIonicFlywheel {
+contract IonicFlywheelBorrow is IonicFlywheelCore, IIonicFlywheel {
   bool public constant isRewardsDistributor = true;
   bool public constant isFlywheel = true;
 
-  function flywheelPreSupplierAction(address market, address supplier) external {
-    accrue(ERC20(market), supplier);
+  function flywheelPreSupplierAction(address market, address supplier) external {}
+
+  function flywheelPreBorrowerAction(address market, address borrower) external {
+    accrue(ERC20(market), borrower);
   }
 
-  function flywheelPreBorrowerAction(address market, address borrower) external {}
-
-  function flywheelPreTransferAction(address market, address src, address dst) external {
-    accrue(ERC20(market), src, dst);
-  }
+  function flywheelPreTransferAction(address market, address src, address dst) external {}
 
   function compAccrued(address user) external view returns (uint256) {
     return _rewardsAccrued[user];

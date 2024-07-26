@@ -15,3 +15,5 @@ node_modules/
 ionic-contracts.iml
 cache_hardhat
 transactions.json
+*transactions.json
+deployments/local

@@ -10,8 +10,8 @@ import { Authority } from "solmate/auth/Auth.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
 import { IERC20MetadataUpgradeable, IERC20Upgradeable } from "openzeppelin-contracts-upgradeable/contracts/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 
-import { IFlywheelBooster } from "flywheel-v2/interfaces/IFlywheelBooster.sol";
-import { FlywheelStaticRewards } from "flywheel-v2/rewards/FlywheelStaticRewards.sol";
+import { IFlywheelBooster } from "../ionic/strategies/flywheel/IFlywheelBooster.sol";
+import { FlywheelStaticRewards } from "../ionic/strategies/flywheel/rewards/FlywheelStaticRewards.sol";
 import { FuseFlywheelCore } from "fuse-flywheel/FuseFlywheelCore.sol";
 
 import { CErc20 } from "../compound/CToken.sol";
@@ -48,7 +48,7 @@ contract FLRTest is BaseTest {
       address(this)
     );
 
-    rewards = new FlywheelStaticRewards(FuseFlywheelCore(address(flywheel)), address(this), Authority(address(0)));
+    rewards = new FlywheelStaticRewards(IonicFlywheelCore(address(flywheel)), address(this), Authority(address(0)));
     flywheel.setFlywheelRewards(rewards);
 
     flywheel.addStrategyForRewards(ERC20(mkt));

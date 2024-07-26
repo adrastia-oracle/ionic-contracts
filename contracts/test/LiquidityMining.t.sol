@@ -6,9 +6,9 @@ import "forge-std/Vm.sol";
 import { ERC20 } from "solmate/tokens/ERC20.sol";
 import { Auth, Authority } from "solmate/auth/Auth.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
-import { FlywheelStaticRewards } from "flywheel-v2/rewards/FlywheelStaticRewards.sol";
-import { FlywheelCore } from "flywheel-v2/FlywheelCore.sol";
-import { IFlywheelBooster } from "flywheel-v2/interfaces/IFlywheelBooster.sol";
+import { FlywheelStaticRewards } from "../ionic/strategies/flywheel/rewards/FlywheelStaticRewards.sol";
+import { IFlywheelBooster } from "../ionic/strategies/flywheel/IFlywheelBooster.sol";
+import { IFlywheelRewards } from "../ionic/strategies/flywheel/rewards/IFlywheelRewards.sol";
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import { ICErc20 } from "../compound/CTokenInterfaces.sol";
@@ -131,7 +131,7 @@ contract LiquidityMiningTest is BaseTest {
     TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(address(impl), address(dpa), "");
     flywheel = IonicFlywheel(address(proxy));
     flywheel.initialize(rewardToken, FlywheelStaticRewards(address(0)), IFlywheelBooster(address(0)), address(this));
-    rewards = new FlywheelStaticRewards(FlywheelCore(address(flywheel)), address(this), Authority(address(0)));
+    rewards = new FlywheelStaticRewards(IonicFlywheelCore(address(flywheel)), address(this), Authority(address(0)));
     flywheel.setFlywheelRewards(rewards);
 
     flywheelClaimer = new IonicFlywheelLensRouter(poolDirectory);

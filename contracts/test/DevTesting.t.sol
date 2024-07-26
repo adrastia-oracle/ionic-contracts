@@ -7,6 +7,7 @@ import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/trans
 import "./config/BaseTest.t.sol";
 import { IonicComptroller } from "../compound/ComptrollerInterface.sol";
 import { ComptrollerFirstExtension } from "../compound/ComptrollerFirstExtension.sol";
+import { CErc20PluginRewardsDelegate } from "../compound/CErc20PluginRewardsDelegate.sol";
 import { Unitroller } from "../compound/Unitroller.sol";
 import { DiamondExtension } from "../ionic/DiamondExtension.sol";
 import { ICErc20 } from "../compound/CTokenInterfaces.sol";
@@ -633,6 +634,30 @@ contract DevTesting is BaseTest {
   function testPERLiquidation() public debuggingOnly forkAtBlock(MODE_MAINNET, 10255413) {
     vm.prank(0x5Cc070844E98F4ceC5f2fBE1592fB1ed73aB7b48);
     _functionCall(0xa12c1E460c06B1745EFcbfC9A1f666a8749B0e3A, hex"20b72325000000000000000000000000f28570694a6c9cd0494955966ae75af61abf5a0700000000000000000000000000000000000000000000000001bc1214ed792fbb0000000000000000000000004341620757bee7eb4553912fafc963e59c949147000000000000000000000000c53edeafb6d502daec5a7015d67936cea0cd0f520000000000000000000000000000000000000000000000000000000000000000", "error in call");
+  }
+
+  function testCtokenUpgrade() public debuggingOnly forkAtBlock(MODE_MAINNET, 10255413) {
+    CErc20PluginRewardsDelegate newImpl = new CErc20PluginRewardsDelegate();
+    TransparentUpgradeableProxy proxy = TransparentUpgradeableProxy(payable(address(wethMarket)));
+
+
+    (uint256[] memory poolIds, PoolDirectory.Pool[] memory pools) = PoolDirectory(0x39C353Cf9041CcF467A04d0e78B63d961E81458a).getActivePools();
+
+    emit log_named_uint("First Pool ID", poolIds[0]);
+    emit log_named_uint("First Pool ID", poolIds[1]);
+    emit log_named_string("First Pool Address", pools[0].name);
+    emit log_named_string("First Pool Address", pools[0].name);
+    emit log_named_address("First Pool Address", pools[0].creator);
+    emit log_named_address("First Pool Address", pools[1].creator);
+    emit log_named_address("First Pool Address", pools[0].comptroller);
+    emit log_named_address("First Pool Address", pools[1].comptroller);
+    //bytes32 bytesAtSlot = vm.load(address(proxy), 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103);
+    //address admin = address(uint160(uint256(bytesAtSlot)));
+    //vm.prank(admin);
+    //proxy.upgradeTo(address(newImpl));
+
+    //vm.prank(dpa.owner());
+    //proxy.upgradeTo(address(newImpl));
   }
 
   function _functionCall(

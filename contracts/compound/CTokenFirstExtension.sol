@@ -13,6 +13,8 @@ import { Multicall } from "../utils/Multicall.sol";
 
 import { IERC20, SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import { AddressesProvider } from "../ionic/AddressesProvider.sol";
+
 contract CTokenFirstExtension is
   CErc20FirstExtensionBase,
   TokenErrorReporter,
@@ -29,7 +31,7 @@ contract CTokenFirstExtension is
   }
 
   function _getExtensionFunctions() external pure virtual override returns (bytes4[] memory) {
-    uint8 fnsCount = 24;
+    uint8 fnsCount = 25;
     bytes4[] memory functionSelectors = new bytes4[](fnsCount);
     functionSelectors[--fnsCount] = this.transfer.selector;
     functionSelectors[--fnsCount] = this.transferFrom.selector;
@@ -39,6 +41,7 @@ contract CTokenFirstExtension is
     functionSelectors[--fnsCount] = this._setAdminFee.selector;
     functionSelectors[--fnsCount] = this._setInterestRateModel.selector;
     functionSelectors[--fnsCount] = this._setNameAndSymbol.selector;
+    functionSelectors[--fnsCount] = this._setAddressesProvider.selector;
     functionSelectors[--fnsCount] = this._setReserveFactor.selector;
     functionSelectors[--fnsCount] = this.supplyRatePerBlock.selector;
     functionSelectors[--fnsCount] = this.borrowRatePerBlock.selector;
@@ -217,6 +220,13 @@ contract CTokenFirstExtension is
     // Set ERC20 name and symbol
     name = _name;
     symbol = _symbol;
+  }
+
+  function _setAddressesProvider(address _ap) external {
+    // Check caller is admin
+    require(hasAdminRights(), "!admin");
+
+    ap = AddressesProvider(_ap);
   }
 
   /**

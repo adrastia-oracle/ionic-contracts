@@ -13,8 +13,8 @@ import { ICErc20 } from "../compound/CTokenInterfaces.sol";
 import { ComptrollerErrorReporter } from "../compound/ErrorReporter.sol";
 import { DiamondExtension } from "../ionic/DiamondExtension.sol";
 
-import { IFlywheelBooster } from "flywheel-v2/interfaces/IFlywheelBooster.sol";
-import { IFlywheelRewards } from "flywheel-v2/interfaces/IFlywheelRewards.sol";
+import { IFlywheelBooster } from "../ionic/strategies/flywheel/IFlywheelBooster.sol";
+import { IFlywheelRewards } from "../ionic/strategies/flywheel/rewards/IFlywheelRewards.sol";
 import { ERC20 } from "solmate/tokens/ERC20.sol";
 import { MockERC20 } from "solmate/test/utils/mocks/MockERC20.sol";
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";

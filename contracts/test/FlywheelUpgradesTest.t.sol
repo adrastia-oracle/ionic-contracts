@@ -16,9 +16,9 @@ import { Comptroller } from "../compound/Comptroller.sol";
 
 import { TransparentUpgradeableProxy } from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 import { ERC20 } from "solmate/tokens/ERC20.sol";
-import { IFlywheelRewards } from "flywheel-v2/interfaces/IFlywheelRewards.sol";
-import { FlywheelCore } from "flywheel-v2/FlywheelCore.sol";
-import { FlywheelDynamicRewards } from "flywheel-v2/rewards/FlywheelDynamicRewards.sol";
+import { IFlywheelRewards } from "flywheel/interfaces/IFlywheelRewards.sol";
+import { FlywheelCore } from "flywheel/FlywheelCore.sol";
+import { FlywheelDynamicRewards } from "flywheel/rewards/FlywheelDynamicRewards.sol";
 
 contract FlywheelUpgradesTest is BaseTest {
   PoolDirectory internal fpd;

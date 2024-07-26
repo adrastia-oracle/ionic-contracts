@@ -86,8 +86,8 @@ contract MarketsTest is BaseTest {
 
     // add the extension to the auto upgrade config
     DiamondExtension[] memory cErc20DelegateExtensions = new DiamondExtension[](2);
-    cErc20DelegateExtensions[0] = newCTokenExtension;
-    cErc20DelegateExtensions[1] = DiamondExtension(newImpl);
+    cErc20DelegateExtensions[0] = DiamondExtension(newImpl);
+    cErc20DelegateExtensions[1] = newCTokenExtension;
     vm.prank(ffd.owner());
     ffd._setCErc20DelegateExtensions(address(newImpl), cErc20DelegateExtensions);
 

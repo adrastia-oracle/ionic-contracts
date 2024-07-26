@@ -68,6 +68,21 @@
     "GlobalPauser": {
       "address": "0x48F0F46F56C2Ca5def59fd673fF69495b7272Eb0"
     },
+    "IonicFlywheelBorrowBooster_ION": {
+      "address": "0x0e47b0fF7b5571047bb1A8b18C9444D25516e7F9"
+    },
+    "IonicFlywheelBorrow_Borrow_ION": {
+      "address": "0x327410E4D3A32EF37712e77fCB005e5327F082De"
+    },
+    "IonicFlywheelBorrow_Borrow_ION_Implementation": {
+      "address": "0xB4c0522F595eA2B407FE3e3D55B36291cC2b2Ced"
+    },
+    "IonicFlywheelBorrow_Borrow_ION_Proxy": {
+      "address": "0x327410E4D3A32EF37712e77fCB005e5327F082De"
+    },
+    "IonicFlywheelDynamicRewards_Borrow_ION": {
+      "address": "0xbC6D8Da615003323B77D442b34976BB9D1124d39"
+    },
     "IonicFlywheelLensRouter": {
       "address": "0x248ea91EF9CCf682a0d516Db148C079396581C53"
     },
